@@ -421,3 +421,240 @@ static EventResult buildBadEvent() {
     return r;
 }
 
+// ============================================================================
+// INTERNAL: RESOLVE PLAYER CHOICE (bad events)
+// ============================================================================
+
+/*
+ * Fills resource deltas into result based on player's choice.
+ */
+static void resolvePlayerChoice(EventResult& result, int choice) {
+    // Match event name to template index
+    int idx = 0;
+    for (int i = 0; i < BAD_COUNT; i++) {
+        if (result.eventName == BAD_EVENTS[i].name) {
+            idx = i;
+            break;
+        }
+    }
+
+    // 0 = Sudden Storm
+    // 1 = Crew Seasickness
+    // 2 = Reef Collision
+    // 3 = Supplies Lost Overboard
+    // 4 = Lost Direction
+
+    if (choice == 1) {
+        // ---- CHOICE A: Safer ----
+        switch (idx) {
+            case 0: // Sudden Storm: slow down
+                result.durabilityDelta = -1;
+                result.extraDaysLost   =  1;
+                break;
+            case 1: // Seasickness: force rest
+                result.staminaDelta  =  2;
+                result.extraDaysLost =  1;
+                break;
+            case 2: // Reef: emergency repair
+                result.goldDelta       = -30;
+                result.durabilityDelta = -1;
+                break;
+            case 3: // Supplies lost: retrieve
+                result.extraDaysLost = 1;
+                if (randRange(0, 1) == 0)
+                    result.foodDelta  = -randRange(1, 2);
+                else
+                    result.waterDelta = -randRange(1, 2);
+                break;
+            case 4: // Lost direction: careful detour
+                result.extraDaysLost = 2;
+                break;
+            default: break;
+        }
+    } else {
+        // ---- CHOICE B: Riskier ----
+        switch (idx) {
+            case 0: // Sudden Storm: push through
+                result.durabilityDelta = -3;
+                result.waterDelta      = -1;
+                break;
+            case 1: // Seasickness: sail shorthanded
+                result.staminaDelta = -1;
+                break;
+            case 2: // Reef: push forward
+                result.durabilityDelta     = -3;
+                result.halfDistanceThisTurn = true;
+                break;
+            case 3: // Supplies lost: abandon
+                result.foodDelta  = -randRange(1, 2);
+                result.waterDelta = -randRange(1, 2);
+                break;
+            case 4: // Lost direction: trust gut
+                result.extraDaysLost = 1;
+                result.sanityDelta   = -5;
+                break;
+            default: break;
+        }
+    }
+
+    // Append outcome summary to description
+    string summary = "";
+    auto ap = [&](const string& s) {
+        if (!summary.empty()) summary += ", ";
+        summary += s;
+    };
+    if (result.foodDelta != 0)
+        ap("Food "       + to_string(result.foodDelta));
+    if (result.waterDelta != 0)
+        ap("Water "      + to_string(result.waterDelta));
+    if (result.goldDelta != 0)
+        ap("Gold "       + to_string(result.goldDelta));
+    if (result.durabilityDelta != 0)
+        ap("Durability " + to_string(result.durabilityDelta));
+    if (result.staminaDelta != 0)
+        ap("Stamina "    + to_string(result.staminaDelta));
+    if (result.sanityDelta != 0)
+        ap("Sanity "     + to_string(result.sanityDelta));
+    if (result.extraDaysLost > 0)
+        ap(to_string(result.extraDaysLost) + " day(s) lost");
+    if (result.halfDistanceThisTurn)
+        ap("distance this turn halved");
+
+    if (!summary.empty())
+        result.description += "\nOutcome: " + summary + ".";
+}
+
+// ============================================================================
+// EVENT NAMESPACE — public API matching main.cpp calling convention
+// ============================================================================
+
+namespace Event {
+
+// ----------------------------------------------------------------------------
+// initSanityFatigue
+// ----------------------------------------------------------------------------
+
+/*
+ * Returns a zero-initialised SanityFatigue for the given difficulty.
+ * extraBadEventChance starts at 0 and is updated each turn by updateSanity().
+ */
+SanityFatigue initSanityFatigue(Difficulty difficulty) {
+    (void)difficulty; // currently uniform starting state across difficulties
+    SanityFatigue sf;
+    sf.consecutiveSailingDays = 0;
+    sf.extraBadEventChance    = 0;
+    return sf;
+}
+
+// ----------------------------------------------------------------------------
+// updateFatigue
+// ----------------------------------------------------------------------------
+
+/*
+ * Updates consecutive sailing day counter after an action.
+ * Sail (1): increments counter.
+ * Rest (2) or Explore (3): resets counter to 0.
+ *
+ * Input:  sf     — modified in place
+ *         action — 1=Sail, 2=Rest, 3=Explore
+ * Output: sf.consecutiveSailingDays updated
+ */
+void updateFatigue(SanityFatigue& sf, int action) {
+    if (action == 1) {
+        sf.consecutiveSailingDays++;
+    } else {
+        sf.consecutiveSailingDays = 0;
+    }
+}
+
+// ----------------------------------------------------------------------------
+// updateSanity
+// ----------------------------------------------------------------------------
+
+/*
+ * Recalculates sf.extraBadEventChance from current game state.
+ *   +5  if crew sanity is CRITICAL (0-39)
+ *   +20 if consecutiveSailingDays >= 5 (fatigue)
+ */
+void updateSanity(SanityFatigue& sf, const Game& game) {
+    int extra = 0;
+    if (game.getSanityStage() == SanityStage::CRITICAL) {
+        extra += 5;
+    }
+    if (sf.consecutiveSailingDays >= 5) {
+        extra += 20;
+    }
+    sf.extraBadEventChance = extra;
+}
+
+// ----------------------------------------------------------------------------
+// triggerRandomEvent
+// ----------------------------------------------------------------------------
+
+/*
+ * Rolls against (base difficulty chance + sf.extraBadEventChance).
+ */
+bool triggerRandomEvent(const Game& game, const SanityFatigue& sf) {
+    GameDifficultySettings s =
+        getDifficultySettings(game.getGameState().difficulty);
+
+    int chance = s.eventChancePercent + sf.extraBadEventChance;
+    if (chance > 95) chance = 95;
+
+    int roll = randRange(1, 100);
+    return roll <= chance;
+}
+
+// ----------------------------------------------------------------------------
+// runRandomEvent
+// ----------------------------------------------------------------------------
+
+/*
+ * Full event flow — called by main.cpp after triggerRandomEvent() is true.
+ */
+void runRandomEvent(Game& game, const SanityFatigue& sf) {
+    GameDifficultySettings s =
+        getDifficultySettings(game.getGameState().difficulty);
+
+    // Step 1: Roll good or bad
+    int roll = randRange(1, 100);
+    EventResult result;
+
+    if (roll <= s.goodEventWeight) {
+        result = buildGoodEvent(game.getGameState().difficulty);
+    } else {
+        result = buildBadEvent();
+    }
+
+    // Step 2: Print event description
+    cout << "\n========================================\n";
+    cout << result.description << "\n";
+
+    // Step 3: Handle bad event player choice
+    if (!result.isGoodEvent) {
+        int choice = 0;
+        while (choice != 1 && choice != 2) {
+            cout << "Enter your choice (1 or 2): ";
+            cin  >> choice;
+            if (choice != 1 && choice != 2) {
+                cout << "Invalid input. Please enter 1 or 2.\n";
+            }
+        }
+        resolvePlayerChoice(result, choice);
+        cout << result.description << "\n"; // reprints with outcome appended
+    }
+
+    cout << "========================================\n";
+
+    // Step 4: Apply standard resource and stat deltas
+    game.applyEventEffects(
+        result.foodDelta,
+        result.waterDelta,
+        result.goldDelta,
+        result.sanityDelta,
+        result.staminaDelta,
+        result.durabilityDelta
+    );
+}
+
+} // namespace Event
