@@ -106,7 +106,8 @@ namespace UI {
 
     /** Wrapper for showDailyActionMenu() using global pet state. */
     int playerActionMenu();
-
+   /** Wrapper for showPetMenu(). */  
+    int playerPetMenu();               
     /** Prompts player to save. @return 1=Save, 2=No */
     int askSaveGame();
 

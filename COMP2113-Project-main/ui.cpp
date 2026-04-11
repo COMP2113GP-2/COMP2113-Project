@@ -7,13 +7,33 @@
  * Handles all menus, status displays, input validation,
  * and screen management for the game.
  */
+/*
+ * ui.cpp
+ * Role 5: UI / Input System
+ * Course: COMP2113 / ENGG1340
+ * Project: Abyssal Odyssey — The Yokohama Quest
+ *
+ * Handles all menus, status displays, input validation,
+ * and screen management for the game.
+ */
 
+/*
+ * ui.cpp
+ * Role 5: UI / Input System
+ * Course: COMP2113 / ENGG1340
+ * Project: Abyssal Odyssey — The Yokohama Quest
+ *
+ * Handles all menus, status displays, input validation,
+ * and screen management for the game.
+ */
+#undef max
 #include "ui.h"
 #include "pet.h"
 #include <iostream>
 #include <string>
 #include <limits>
 #include <iomanip>
+#include <windows.h>
 
 using namespace std;
 
@@ -22,6 +42,297 @@ using namespace std;
 // ============================================================================
 
 static int s_menuChoice = 0;
+
+// ============================================================================
+// ASCII ART RESOURCES (Adjusted width)
+// ============================================================================
+
+// Main menu navigation chart
+static const char* MAIN_MENU_ART[] = {
+    "    __    __    __    __    __    __    ",
+    "   /  \\  /  \\  /  \\  /  \\  /  \\  /  \\ ",
+    "  /  __\\/  __\\/  __\\/  __\\/  __\\/  __\\",
+    " /  /  /  /  /  /  /  /  /  /  /  /  / ",
+    "(  (  (  (  (  (  (  (  (  (  (  (  (  ",
+    " \\  \\  \\  \\  \\  \\  \\  \\  \\  \\  \\  \\  \\ ",
+    "  \\  \\  \\  \\  \\  \\  \\  \\  \\  \\  \\  \\  \\",
+    "   \\__\\  \\__\\  \\__\\  \\__\\  \\__\\  \\__\\  ",
+    " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+};
+
+// Ship status art
+static const char* SHIP_STATUS_ART[] = {
+    "             |\\ | /|              ",
+    "             | \\|/ |              ",
+    "            /|     |\\             ",
+    "           /_|     |_\\            ",
+    "         oO_O       O_Oo          ",
+    "         |_o_|     |_o_|          ",
+    "           |_________|            ",
+    "          /           \\           ",
+    "         /             \\          ",
+    "        /_______________\\         ",
+    "   ~~~~~               ~~~~~      "
+};
+
+// Port sign
+static const char* PORT_ART[] = {
+    "       ____                     ",
+    "     _|____|_                   ",
+    "    /  o  o  \\                  ",
+    "   |    ^     |  PORT           ",
+    "   |   '-'    |  AHEAD          ",
+    "    \\________/                  ",
+    "      |    |                    ",
+    "     /|    |\\                   ",
+    "    / |    | \\                  ",
+    "   ~~~      ~~~                 "
+};
+
+// Dog art
+static const char* DOG_ART[] = {
+    "      / \\__                     ",
+    "     (    @\\___                 ",
+    "     /         O                ",
+    "    /   (_____/                 ",
+    "   /_____/   U                  ",
+    "                                ",
+    "  DOGGO - Loyal Shipmate        "
+};
+
+// Cat art
+static const char* CAT_ART[] = {
+    "       /\\___/\\                  ",
+    "      (  o o  )                 ",
+    "       /  ^  \\                 ",
+    "      /       \\                ",
+    "      \\_______/                ",
+    "       |     |                 ",
+    "  KITTY - Nimble Companion     "
+};
+
+// Parrot art
+static const char* PARROT_ART[] = {
+    "        \\\\                     ",
+    "         \\\\                    ",
+    "         (o>                   ",
+    "      \\\\_//)                   ",
+    "       \\_/_)                   ",
+    "        _|_                    ",
+    "  POLLY - Colorful Lookout     "
+};
+
+// Victory sign
+static const char* VICTORY_ART[] = {
+    "    \\  |  /                   ",
+    "     \\ | /                    ",
+    "   .--\"\"\"--.                  ",
+    "  /  _    _ \\                 ",
+    " |  (o)  (o)  |  VICTORY!     ",
+    "  \\    ^    /                 ",
+    "   '--...--'                  ",
+    "      |  |                    ",
+    "     /    \\                   ",
+    "    /      \\                  ",
+    " ~~~~~~~~~~~~~~~              "
+};
+
+// Defeat sign
+static const char* DEFEAT_ART[] = {
+    "                              ",
+    "     .-\"\"\"\"-._                ",
+    "    /         \\               ",
+    "   |  O     O  |  DEFEATED    ",
+    "   |     v     |              ",
+    "    \\  .---.  /              ",
+    "     '-._____.-'               ",
+    "       /     \\                ",
+    "      /       \\               ",
+    "     ~~~~~~~~~~~              "
+};
+
+// Compass
+static const char* COMPASS_ART[] = {
+    "         N                    ",
+    "         |                    ",
+    "         |                    ",
+    "    W----+----E               ",
+    "         |                    ",
+    "         |                    ",
+    "         S                    ",
+    "                              ",
+    "     YOKOHAMA  >>>            "
+};
+
+// ============================================================================
+// TERMINAL HELPER FUNCTIONS
+// ============================================================================
+
+// Get terminal width
+int getTerminalWidth() {
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    int width = 80; // Default width
+    
+    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
+        width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+    }
+    
+    // Ensure minimum width
+    if (width < 60) width = 60;
+    if (width > 120) width = 120; // Limit maximum width
+    
+    return width;
+}
+
+// Improved center printing function
+void printCentered(const string& text, int width = -1) {
+    if (width == -1) {
+        width = getTerminalWidth();
+    }
+    
+    int len = (int)text.size();
+    
+    // Handle empty lines
+    if (len == 0) {
+        cout << endl;
+        return;
+    }
+    
+    // If text is longer than width, output directly
+    if (len >= width) {
+        cout << text << endl;
+        return;
+    }
+    
+    // Calculate left margin
+    int left = (width - len) / 2;
+    
+    // Output leading spaces
+    for (int i = 0; i < left; i++) {
+        cout << ' ';
+    }
+    
+    cout << text << endl;
+}
+
+// Print divider line
+void printDivider(const string& pattern = "=") {
+    int width = getTerminalWidth();
+    string line;
+    
+    // Create divider line
+    while ((int)line.size() < width) {
+        line += pattern;
+    }
+    
+    // Trim to correct width
+    cout << line.substr(0, width) << endl;
+}
+
+// Print wave line
+void printWaveLine() {
+    int width = getTerminalWidth();
+    string wave;
+    
+    while ((int)wave.size() < width) {
+        wave += "~";
+    }
+    
+    cout << wave.substr(0, width) << endl;
+}
+
+// Print ASCII art
+void printAsciiArt(const char* art[], int lines) {
+    for (int i = 0; i < lines; i++) {
+        printCentered(art[i]);
+    }
+}
+
+// Print ASCII art based on pet type
+void printPetArt(PetType type) {
+    switch(type) {
+        case PetType::CAT:
+            printAsciiArt(CAT_ART, 7);
+            break;
+        case PetType::DOG:
+            printAsciiArt(DOG_ART, 7);
+            break;
+        case PetType::PARROT:
+            printAsciiArt(PARROT_ART, 7);
+            break;
+        default:
+            // If no pet, don't print anything
+            break;
+    }
+}
+
+// Get pet type name
+string getPetTypeName(PetType type) {
+    switch(type) {
+        case PetType::CAT: return "Cat";
+        case PetType::DOG: return "Dog";
+        case PetType::PARROT: return "Parrot";
+        default: return "None";
+    }
+}
+
+// Get pet type description
+string getPetTypeDescription(PetType type) {
+    switch(type) {
+        case PetType::DOG: return "A loyal canine companion. Boosts crew morale.";
+        case PetType::CAT: return "A nimble feline friend. Good at catching pests.";
+        case PetType::PARROT: return "A colorful lookout. Can spot land from afar.";
+        default: return "No companion selected.";
+    }
+}
+
+// Print centered text with box
+void printBoxedCentered(const string& text) {
+    int width = getTerminalWidth();
+    int textLen = (int)text.size();
+    
+    // Calculate appropriate box width
+    int boxWidth = min(60, width - 4);
+    if (textLen + 6 > boxWidth) {
+        boxWidth = textLen + 6;
+    }
+    
+    int leftPadding = (width - boxWidth) / 2;
+    
+    // Top border
+    cout << string(leftPadding, ' ') << "╔" << string(boxWidth - 2, '═') << "╗" << endl;
+    
+    // Text line
+    int leftTextPadding = (boxWidth - 2 - textLen) / 2;
+    int rightTextPadding = boxWidth - 2 - textLen - leftTextPadding;
+    
+    cout << string(leftPadding, ' ') << "║" 
+         << string(leftTextPadding, ' ') 
+         << text 
+         << string(rightTextPadding, ' ') 
+         << "║" << endl;
+    
+    // Bottom border
+    cout << string(leftPadding, ' ') << "╚" << string(boxWidth - 2, '═') << "╝" << endl;
+}
+
+// Print progress bar
+void printProgressBar(int value, int maxValue, int width = 50) {
+    int progress = (value * 100) / maxValue;
+    if (progress > 100) progress = 100;
+    if (progress < 0) progress = 0;
+    
+    int filled = (progress * width) / 100;
+    
+    string bar = "[";
+    for (int i = 0; i < width; i++) {
+        if (i < filled) bar += "█";
+        else bar += "░";
+    }
+    bar += "] " + to_string(progress) + "%";
+    
+    printCentered(bar);
+}
 
 // ============================================================================
 // CORE UI FUNCTIONS
@@ -34,7 +345,7 @@ namespace UI {
 // ----------------------------------------------------------------------------
 
 void clearScreen() {
-    cout << "\033[2J\033[1;1H";
+    system("cls");
 }
 
 // ----------------------------------------------------------------------------
@@ -42,8 +353,10 @@ void clearScreen() {
 // ----------------------------------------------------------------------------
 
 void pressEnterToContinue() {
-    cout << "  Press Enter to continue...";
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    cout << endl;
+    printWaveLine();
+    printCentered("Press Enter to continue...");
+     cin.ignore(INT_MAX, '\n'); 
 }
 
 // ----------------------------------------------------------------------------
@@ -54,138 +367,204 @@ int getInput(int min, int max) {
     int value;
     while (true) {
         if (cin >> value && value >= min && value <= max) {
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin.ignore(INT_MAX, '\n');
             return value;
         }
         cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cout << "  Invalid input. Enter a number between "
-             << min << " and " << max << ": ";
+        cin.ignore(INT_MAX, '\n');
+        printCentered("Invalid input. Enter a number between " + 
+                     to_string(min) + " and " + to_string(max) + ": ");
     }
 }
 
 // ----------------------------------------------------------------------------
-// showMainMenu
+// showMainMenu (ENHANCED WITH ASCII ART)
 // ----------------------------------------------------------------------------
 
 int showMainMenu() {
     clearScreen();
-    cout << "============================================" << endl;
-    cout << "                                            " << endl;
-    cout << "     ABYSSAL ODYSSEY                        " << endl;
-    cout << "        The Yokohama Quest                  " << endl;
-    cout << "                                            " << endl;
-    cout << "     ~  ~  ~  ~  ~  ~  ~  ~  ~             " << endl;
-    cout << "       ~~~    ~~~    ~~~    ~~~             " << endl;
-    cout << "     ~  ~  ~  ~  ~  ~  ~  ~  ~             " << endl;
-    cout << "                                            " << endl;
-    cout << "     A Text-Based Ocean Survival Game       " << endl;
-    cout << "                                            " << endl;
-    cout << "============================================" << endl;
-    cout << "  [1] New Game" << endl;
-    cout << "  [2] Load Game" << endl;
-    cout << "  [3] Quit" << endl;
-    cout << "============================================" << endl;
-    cout << "  Your choice: ";
+    
+    // Top art
+    printWaveLine();
+    printAsciiArt(MAIN_MENU_ART, 9);
+    printWaveLine();
+    
+    // Title
+    printCentered("");
+    printBoxedCentered("ABYSSAL ODYSSEY");
+    printBoxedCentered("The Yokohama Quest");
+    printCentered("");
+    printCentered("A Text-Based Ocean Survival Adventure");
+    printCentered("");
+    
+    // Ship art
+    printAsciiArt(SHIP_STATUS_ART, 11);
+    printCentered("");
+    
+    // Menu options
+    printDivider("=");
+    printCentered("[1] Set Sail  — Begin New Voyage");
+    printCentered("[2] Load Ship — Continue Journey");
+    printCentered("[3] Dock Ship — End Program");
+    printDivider("=");
+    printCentered("Your choice: ");
+    
     return getInput(1, 3);
 }
 
 // ----------------------------------------------------------------------------
-// showDifficultyMenu
+// showDifficultyMenu (ENHANCED)
 // ----------------------------------------------------------------------------
 
 int showDifficultyMenu() {
     clearScreen();
-    cout << "============================================" << endl;
-    cout << "         Select Difficulty" << endl;
-    cout << "============================================" << endl;
-    cout << "  [1] Story   — No time limit, gentle seas" << endl;
-    cout << "  [2] Easy    — 92 day limit, fair winds" << endl;
-    cout << "  [3] Medium  — 61 day limit, rough waters" << endl;
-    cout << "  [4] Hard    — 41 day limit, brutal ocean" << endl;
-    cout << "============================================" << endl;
-    cout << "  Your choice: ";
+    
+    printWaveLine();
+    printCentered("     /\\                          ");
+    printCentered("    /  \\    WEATHER  CHART      ");
+    printCentered("   /    \\                        ");
+    printCentered("  /------\\                       ");
+    printWaveLine();
+    
+    printCentered("");
+    printBoxedCentered("SELECT DIFFICULTY");
+    printCentered("");
+    
+    // Compass art
+    printAsciiArt(COMPASS_ART, 9);
+    printCentered("");
+    
+    printDivider("=");
+    printCentered("[1] Story   — Calm Seas, No Time Limit");
+    printCentered("[2] Easy    — Gentle Winds, 92 Days");
+    printCentered("[3] Medium  — Choppy Waters, 61 Days");
+    printCentered("[4] Hard    — Stormy Ocean, 41 Days");
+    printDivider("=");
+    printCentered("Your choice: ");
+    
     return getInput(1, 4);
 }
 
 // ----------------------------------------------------------------------------
-// askPetChoice
+// askPetChoice (Maintain compatibility with pet.cpp)
 // ----------------------------------------------------------------------------
 
 bool askPetChoice() {
-    cout << "\n============================================" << endl;
-    cout << "  Would you like a pet companion?" << endl;
-    cout << "============================================" << endl;
-    cout << "  [1] Yes" << endl;
-    cout << "  [2] No" << endl;
-    cout << "============================================" << endl;
-    cout << "  Your choice: ";
+    // This function maintains the original simple logic, does not modify the pet system
+    printCentered("");
+    printDivider("=");
+    printCentered("Would you like a pet companion?");
+    printDivider("=");
+    printCentered("[1] Yes");
+    printCentered("[2] No");
+    printDivider("=");
+    printCentered("Your choice: ");
+    
     return getInput(1, 2) == 1;
 }
 
 // ----------------------------------------------------------------------------
-// showDailyActionMenu
+// showDailyActionMenu (ENHANCED)
 // ----------------------------------------------------------------------------
 
 int showDailyActionMenu(bool hasPet) {
-    cout << "\n============================================" << endl;
-    cout << "         Choose Your Action" << endl;
-    cout << "============================================" << endl;
-    cout << "  [1] Sail     — Travel toward Yokohama" << endl;
-    cout << "  [2] Explore  — Search for resources" << endl;
-    cout << "  [3] Rest     — Recover stamina & morale" << endl;
+    printCentered("");
+    printWaveLine();
+    printCentered("DAILY LOG - Day " + to_string(g_pet.hasPet ? 1 : 0));
+    printWaveLine();
+    
+    printAsciiArt(COMPASS_ART, 9);
+    printCentered("");
+    
+    printDivider("=");
+    printCentered("[1] SAIL    — Chart course to Yokohama");
+    printCentered("[2] EXPLORE — Search islands & wrecks");
+    printCentered("[3] REST    — Recover strength & morale");
     if (hasPet) {
-        cout << "  [4] Pet Menu — Interact with your pet" << endl;
+        printCentered("[4] PET     — Care for your companion");
     }
-    cout << "============================================" << endl;
-    cout << "  Your choice: ";
+    printDivider("=");
+    printCentered("Your choice: ");
 
     int maxChoice = hasPet ? 4 : 3;
     return getInput(1, maxChoice);
 }
 
 // ----------------------------------------------------------------------------
-// showPetMenu
+// showPetMenu (ENHANCED WITH PET-SPECIFIC ART)
 // ----------------------------------------------------------------------------
 
 int showPetMenu() {
-    cout << "\n--------------------------------------------" << endl;
-    cout << "         Pet Menu" << endl;
-    cout << "--------------------------------------------" << endl;
-    cout << "  [1] Feed" << endl;
-    cout << "  [2] Play" << endl;
-    cout << "  [3] Status" << endl;
-    cout << "  [4] Back" << endl;
-    cout << "--------------------------------------------" << endl;
-    cout << "  Your choice: ";
+    clearScreen();
+    
+    // Check if there is a pet
+    if (!g_pet.hasPet || !g_pet.alive) {
+        printWaveLine();
+        printCentered("No companion aboard");
+        printWaveLine();
+        pressEnterToContinue();
+        return 4; // Return "Back"
+    }
+    
+    printWaveLine();
+    
+    // Display pet art
+    printPetArt(g_pet.type);
+    printWaveLine();
+    
+    // Pet type description
+    printCentered("");
+    printCentered("Companion: " + g_pet.name + " (" + getPetTypeName(g_pet.type) + ")");
+    printCentered(getPetTypeDescription(g_pet.type));
+    printCentered("");
+    
+    printBoxedCentered("SHIP'S COMPANION MENU");
+    printCentered("");
+    
+    printDivider("=");
+    printCentered("[1] FEED  — Share rations with companion");
+    printCentered("[2] PLAY  — Boost mood and bond");
+    printCentered("[3] CHECK — View companion status");
+    printCentered("[4] BACK  — Return to main actions");
+    printDivider("=");
+    printCentered("Your choice: ");
+    
     return getInput(1, 4);
 }
 
 // ----------------------------------------------------------------------------
-// showPortMenu
+// showPortMenu (ENHANCED)
 // ----------------------------------------------------------------------------
 
 int showPortMenu() {
-    cout << "\n============================================" << endl;
-    cout << "         Port Services" << endl;
-    cout << "============================================" << endl;
-    cout << "  [1] Buy Supplies" << endl;
-    cout << "  [2] Repair Ship" << endl;
-    cout << "  [3] Save Game" << endl;
-    cout << "  [4] Leave Port" << endl;
-    cout << "============================================" << endl;
-    cout << "  Your choice: ";
+    clearScreen();
+    
+    printWaveLine();
+    printAsciiArt(PORT_ART, 10);
+    printWaveLine();
+    
+    printCentered("");
+    printBoxedCentered("PORT OF CALL SERVICES");
+    printCentered("");
+    
+    printDivider("=");
+    printCentered("[1] TRADER   — Buy supplies & provisions");
+    printCentered("[2] SHIPWRIGHT— Repair hull & equipment");
+    printCentered("[3] RECORDS  — Save voyage progress");
+    printCentered("[4] DEPART   — Set sail to continue");
+    printDivider("=");
+    printCentered("Your choice: ");
+    
     return getInput(1, 4);
 }
 
 // ----------------------------------------------------------------------------
-// displayStatus
+// displayStatus (ENHANCED WITH BETTER FORMATTING)
 // ----------------------------------------------------------------------------
 
 void displayStatus(const GameState& game, const SanityFatigue& sf) {
     clearScreen();
-
-    // Day and distance header
+    
     int daysLimit = -1;
     switch (game.difficulty) {
         case Difficulty::STORY:  daysLimit = -1; break;
@@ -193,205 +572,304 @@ void displayStatus(const GameState& game, const SanityFatigue& sf) {
         case Difficulty::MEDIUM: daysLimit = 61; break;
         case Difficulty::HARD:   daysLimit = 41; break;
     }
-
-    cout << "============================================" << endl;
-    cout << "  VOYAGE STATUS" << endl;
-    cout << "============================================" << endl;
-
-    // Day counter
-    cout << "  Day: " << game.currentDay;
-    if (daysLimit > 0) {
-        cout << " / " << daysLimit;
-    }
-    cout << endl;
-
-    // Distance progress bar (30 chars wide)
-    int dist = game.ship.distance;
-    if (dist > 3000) dist = 3000;
-    int filled = (dist * 30) / 3000;
-    int empty  = 30 - filled;
-
-    cout << "  Distance: " << game.ship.distance << " / 3000 km" << endl;
-    cout << "  [";
-    for (int i = 0; i < filled; i++) cout << "=";
-    if (filled < 30) {
-        cout << ">";
-        for (int i = 1; i < empty; i++) cout << "-";
-    }
-    cout << "] " << (dist * 100) / 3000 << "%" << endl;
-
-    cout << "--------------------------------------------" << endl;
-
+    
+    // Top art
+    printWaveLine();
+    printAsciiArt(SHIP_STATUS_ART, 11);
+    printWaveLine();
+    
+    // Title
+    printCentered("");
+    printBoxedCentered("VOYAGE STATUS REPORT");
+    printCentered("");
+    
+    // Progress bar
+    int progress = (game.ship.distance * 100) / 3000;
+    if (progress > 100) progress = 100;
+    if (progress < 0) progress = 0;
+    printProgressBar(game.ship.distance, 3000);
+    printCentered("");
+    
+    // Main status
+    printDivider("-");
+    printCentered("DAY: " + to_string(game.currentDay) + 
+                 (daysLimit > 0 ? " / " + to_string(daysLimit) : " (No Limit)"));
+    printCentered("DISTANCE: " + to_string(game.ship.distance) + " / 3000 km");
+    printDivider("-");
+    
     // Resources
-    cout << "  Food       : " << game.resources.food << endl;
-    cout << "  Water      : " << game.resources.freshWater << endl;
-    cout << "  Gold       : " << game.resources.gold << endl;
-
-    cout << "--------------------------------------------" << endl;
-
-    // Crew stats
-    cout << "  Stamina    : " << game.crew.stamina << " / 10" << endl;
-    cout << "  Sanity     : " << game.crew.sanity  << " / 100";
-    if (game.crew.sanity < 40) {
-        cout << "  [CRITICAL]";
-    } else if (game.crew.sanity >= 80) {
-        cout << "  [GOOD]";
+    printCentered("SUPPLIES: " + to_string(game.resources.food));
+    printCentered("WATER:    " + to_string(game.resources.freshWater));
+    printCentered("GOLD:     " + to_string(game.resources.gold));
+    printDivider("-");
+    
+    // Crew status
+    printBoxedCentered("CREW CONDITION");
+    printCentered("");
+    
+    // Stamina bar
+    string staminaBar = "STAMINA:   [";
+    for (int i = 0; i < 10; i++) {
+        if (i < game.crew.stamina) staminaBar += "█";
+        else staminaBar += "░";
     }
-    cout << endl;
-
-    // Ship stats
-    cout << "  Durability : " << game.ship.durability << " / 10" << endl;
-
-    // Fatigue indicator
+    staminaBar += "] " + to_string(game.crew.stamina) + "/10";
+    printCentered(staminaBar);
+    
+    // Sanity bar
+    string sanityBar = "SANITY:    [";
+    int sanityBars = game.crew.sanity / 10;
+    for (int i = 0; i < 10; i++) {
+        if (i < sanityBars) {
+            if (game.crew.sanity >= 80) sanityBar += "▓";
+            else if (game.crew.sanity >= 40) sanityBar += "▒";
+            else sanityBar += "░";
+        }
+        else sanityBar += "░";
+    }
+    sanityBar += "] " + to_string(game.crew.sanity) + "/100";
+    if (game.crew.sanity < 40) sanityBar += "  [CRITICAL]";
+    else if (game.crew.sanity >= 80) sanityBar += "  [GOOD]";
+    printCentered(sanityBar);
+    
+    // Hull durability
+    string durabilityBar = "HULL:      [";
+    for (int i = 0; i < 10; i++) {
+        if (i < game.ship.durability) durabilityBar += "█";
+        else durabilityBar += "░";
+    }
+    durabilityBar += "] " + to_string(game.ship.durability) + "/10";
+    printCentered(durabilityBar);
+    
+    // Fatigue status
     if (sf.consecutiveSailingDays >= 5) {
-        cout << "  Fatigue    : FATIGUED ("
-             << sf.consecutiveSailingDays << " consecutive sail days)" << endl;
+        printCentered("FATIGUE:    ██████████  FATIGUED (" + 
+                     to_string(sf.consecutiveSailingDays) + " days)");
     } else if (sf.consecutiveSailingDays >= 3) {
-        cout << "  Fatigue    : Warning ("
-             << sf.consecutiveSailingDays << " consecutive sail days)" << endl;
+        printCentered("FATIGUE:    ████░░░░░░  WARNING (" + 
+                     to_string(sf.consecutiveSailingDays) + " days)");
     }
-
-    // Pet summary (brief, if alive)
+    
+    // Pet status
     if (g_pet.hasPet && g_pet.alive && game.pet != nullptr) {
-        cout << "--------------------------------------------" << endl;
-        cout << "  Pet (" << g_pet.name << "): "
-             << "Food " << game.pet->petFood
-             << " | Mood " << game.pet->petMood << endl;
+        printDivider("-");
+        printCentered("SHIP'S COMPANION: " + g_pet.name + 
+                     " (" + getPetTypeName(g_pet.type) + ")");
+        
+        // Display corresponding pet art
+        printPetArt(g_pet.type);
+        
+        string petFoodBar = "FOOD:  [";
+        int petFoodBars = game.pet->petFood / 20;
+        for (int i = 0; i < 5; i++) {
+            if (i < petFoodBars) petFoodBar += "▓";
+            else petFoodBar += "░";
+        }
+        petFoodBar += "] " + to_string(game.pet->petFood) + "/100";
+        
+        string petMoodBar = "MOOD:  [";
+        int petMoodBars = game.pet->petMood / 20;
+        for (int i = 0; i < 5; i++) {
+            if (i < petMoodBars) {
+                if (game.pet->petMood >= 60) petMoodBar += "♥";
+                else if (game.pet->petMood >= 30) petMoodBar += "♡";
+                else petMoodBar += "♢";
+            }
+            else petMoodBar += "░";
+        }
+        petMoodBar += "] " + to_string(game.pet->petMood) + "/100";
+        
+        printCentered(petFoodBar + "  " + petMoodBar);
     }
-
-    cout << "============================================\n" << endl;
+    
+    printWaveLine();
+    printCentered("");
 }
 
 // ----------------------------------------------------------------------------
-// showWinScreen
+// showWinScreen (ENHANCED WITH PET-SPECIFIC MESSAGES)
 // ----------------------------------------------------------------------------
 
 void showWinScreen(int daysUsed, bool bff) {
     clearScreen();
-    cout << "============================================" << endl;
-    cout << "                                            " << endl;
-    cout << "         *** VICTORY! ***                   " << endl;
-    cout << "                                            " << endl;
-    cout << "   You have reached Yokohama!               " << endl;
-    cout << "   The Abyssal Odyssey is complete.         " << endl;
-    cout << "                                            " << endl;
-    cout << "   Days at sea: " << daysUsed << endl;
-    cout << "                                            " << endl;
-    if (bff) {
-        cout << "   *** ACHIEVEMENT: Best Friend Forever! ***" << endl;
-        cout << "   Your pet stayed by your side through     " << endl;
-        cout << "   every storm and starlit night.           " << endl;
-        cout << "                                            " << endl;
+    
+    printWaveLine();
+    printAsciiArt(VICTORY_ART, 11);
+    printWaveLine();
+    
+    printCentered("");
+    printBoxedCentered("*** VICTORY! ***");
+    printCentered("");
+    
+    printCentered("YOKOHAMA HARBOR - SAFELY ARRIVED");
+    printCentered("");
+    
+    // Ship arrival art
+    printCentered("        |\\   |   /|        ");
+    printCentered("        | \\  |  / |        ");
+    printCentered("       /|  \\ | /  |\\       ");
+    printCentered("      /_|   \\|/   |_\\      ");
+    printCentered("   oO_O          O_Oo       ");
+    printCentered("   |_o_|  DOCKED |_o_|     ");
+    printCentered("     |____________|        ");
+    printCentered("    /              \\       ");
+    printCentered("   /  THE  VOYAGE   \\      ");
+    printCentered("  /     IS  COMPLETE \\     ");
+    printCentered(" ~~~~~~~~~~~~~~~~~~~~~~~~~ ");
+    printCentered("");
+    
+    printDivider("=");
+    printCentered("DAYS AT SEA: " + to_string(daysUsed));
+    printCentered("DISTANCE SAILED: 3000 km");
+    
+    // Display pet-related victory message
+    if (g_pet.hasPet && g_pet.alive) {
+        printDivider("-");
+        printCentered("With your trusty " + getPetTypeName(g_pet.type) + 
+                     " " + g_pet.name + " by your side!");
+        printPetArt(g_pet.type);
     }
-    cout << "   Thank you for playing!                   " << endl;
-    cout << "                                            " << endl;
-    cout << "============================================" << endl;
+    
+    if (bff) {
+        printDivider("-");
+        printCentered("★ ACHIEVEMENT UNLOCKED: BEST FRIEND FOREVER ★");
+        if (g_pet.hasPet) {
+            printCentered("Your faithful " + getPetTypeName(g_pet.type) + " " + g_pet.name);
+            printCentered("stayed by your side through every storm and starlit night.");
+        } else {
+            printCentered("Your crew bonded as a family on this incredible journey.");
+        }
+        printCentered("");
+    }
+    
+    printDivider("=");
+    printCentered("The Abyssal Odyssey has reached its end.");
+    printCentered("Fair winds, Captain. Until next voyage.");
+    printWaveLine();
 }
 
 // ----------------------------------------------------------------------------
-// showLoseScreen
+// showLoseScreen (ENHANCED)
 // ----------------------------------------------------------------------------
 
 void showLoseScreen(const string& reason) {
     clearScreen();
-    cout << "============================================" << endl;
-    cout << "                                            " << endl;
-    cout << "         *** GAME OVER ***                  " << endl;
-    cout << "                                            " << endl;
-    cout << "   The ocean claims another voyage...       " << endl;
-    cout << "                                            " << endl;
-    cout << "   Reason: " << reason << endl;
-    cout << "                                            " << endl;
-    cout << "   Better luck next time, Captain.          " << endl;
-    cout << "                                            " << endl;
-    cout << "============================================" << endl;
+    
+    printWaveLine();
+    printAsciiArt(DEFEAT_ART, 10);
+    printWaveLine();
+    
+    printCentered("");
+    printBoxedCentered("*** VOYAGE LOST ***");
+    printCentered("");
+    
+    // Shipwreck art
+    printCentered("         .-\"\"\"\"-._                ");
+    printCentered("        /         \\               ");
+    printCentered("       |           |              ");
+    printCentered("       |  x     x  |              ");
+    printCentered("        \\  .---.  /              ");
+    printCentered("         '-._____.-'               ");
+    printCentered("             |  |                  ");
+    printCentered("           \\/    \\/             ");
+    printCentered("         ~~~~~~~~~~~~~           ");
+    printCentered("");
+    
+    printDivider("=");
+    printCentered("The ocean claims another voyage...");
+    printCentered("");
+    printCentered("CAUSE: " + reason);
+    printCentered("");
+    
+    // Display pet-related failure message
+    if (g_pet.hasPet && g_pet.alive) {
+        printDivider("-");
+        printCentered("Your " + getPetTypeName(g_pet.type) + " " + 
+                     g_pet.name + " will be missed...");
+        printPetArt(g_pet.type);
+    }
+    
+    printDivider("=");
+    printCentered("May your next journey find calmer seas.");
+    printCentered("The Abyssal Odyssey continues...");
+    printWaveLine();
 }
 
 // ============================================================================
-// WRAPPER FUNCTIONS (Match main.cpp calling convention)
+// WRAPPER FUNCTIONS
 // ============================================================================
-
-// ----------------------------------------------------------------------------
-// showWelcomeScreen
-// ----------------------------------------------------------------------------
 
 void showWelcomeScreen() {
     s_menuChoice = showMainMenu();
     if (s_menuChoice == 3) {
-        cout << "\n  Fair winds, Captain. Until next time.\n" << endl;
+        cout << endl;
+        printWaveLine();
+        printCentered("Ship safely docked. Until next voyage, Captain.");
+        printWaveLine();
+        cout << endl;
         exit(0);
     }
 }
 
-// ----------------------------------------------------------------------------
-// askLoadGame — returns 1 for load, 2 for new game
-// main.cpp checks: if (loadChoice == 1) => load
-// ----------------------------------------------------------------------------
-
 int askLoadGame() {
-    // showMainMenu returns 1=New, 2=Load, 3=Quit
-    // main.cpp expects 1=Load, else=New
-    if (s_menuChoice == 2) return 1;  // Load Game
-    return 2;                          // New Game
+    return (s_menuChoice == 2) ? 1 : 2;
 }
-
-// ----------------------------------------------------------------------------
-// chooseDifficulty
-// ----------------------------------------------------------------------------
 
 int chooseDifficulty() {
     return showDifficultyMenu();
 }
 
-// ----------------------------------------------------------------------------
-// showGameStatus
-// ----------------------------------------------------------------------------
-
 void showGameStatus(const GameState& game, const SanityFatigue& sf) {
     displayStatus(game, sf);
 }
-
-// ----------------------------------------------------------------------------
-// playerActionMenu
-// ----------------------------------------------------------------------------
 
 int playerActionMenu() {
     return showDailyActionMenu(g_pet.hasPet);
 }
 
-// ----------------------------------------------------------------------------
-// askSaveGame
-// ----------------------------------------------------------------------------
-
-int askSaveGame() {
-    cout << "\n--------------------------------------------" << endl;
-    cout << "  Save your progress?" << endl;
-    cout << "--------------------------------------------" << endl;
-    cout << "  [1] Yes" << endl;
-    cout << "  [2] No" << endl;
-    cout << "--------------------------------------------" << endl;
-    cout << "  Your choice: ";
-    return getInput(1, 2);
+int playerPetMenu() {
+    return showPetMenu();
 }
 
-// ----------------------------------------------------------------------------
-// showGameResult
-// ----------------------------------------------------------------------------
+int askSaveGame() {
+    clearScreen();
+    printWaveLine();
+    printCentered("      ___                     ");
+    printCentered("     /   \\___   RECORD LOG   ");
+    printCentered("    /        \\               ");
+    printCentered("   /  SAVE    \\              ");
+    printCentered("  /  PROGRESS  \\             ");
+    printCentered("  \\___________/              ");
+    printWaveLine();
+    
+    printCentered("");
+    printBoxedCentered("RECORD VOYAGE PROGRESS?");
+    printCentered("");
+    
+    printDivider("=");
+    printCentered("[1] Yes — Save journey to ship's log");
+    printCentered("[2] No  — Continue without saving");
+    printDivider("=");
+    printCentered("Your choice: ");
+    
+    return getInput(1, 2);
+}
 
 void showGameResult(const GameState& game) {
     if (game.status == GameStatus::VICTORY) {
         showWinScreen(game.currentDay, g_pet.bffUnlocked);
     } else {
         string reason;
-        if (game.crew.stamina <= 0) {
-            reason = "Your crew collapsed from exhaustion.";
-        } else if (game.ship.durability <= 0) {
-            reason = "Your ship broke apart beneath the waves.";
-        } else if (game.daysWithoutWaterResupply >= 2) {
-            reason = "The crew perished from dehydration.";
-        } else {
-            reason = "You ran out of time to reach Yokohama.";
-        }
+        if (game.crew.stamina <= 0)
+            reason = "Crew succumbed to exhaustion";
+        else if (game.ship.durability <= 0)
+            reason = "Ship broken by the relentless sea";
+        else if (game.daysWithoutWaterResupply >= 2)
+            reason = "Dehydration took the crew";
+        else if (game.currentDay >= 100)  // Assuming 100 is max
+            reason = "Time ran out before reaching port";
+        else
+            reason = "The voyage met an untimely end";
         showLoseScreen(reason);
     }
 }
