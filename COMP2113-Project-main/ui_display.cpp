@@ -579,7 +579,7 @@ void Display::stormAnimation() {
 
 void Display::showEventBanner(const string& eventName, bool isGood) {
     string color = isGood ? FG_LTBLUE : FG_RED;
-    string label = isGood ? "  GOOD EVENT  " : "  BAD EVENT   ";
+    string label = isGood ? "  GOOD EVENT" : "  BAD EVENT ";
     string icon  = isGood ? "  **" : "  !!";
     const int W  = 54;
     int nameLen  = (int)eventName.size();
@@ -588,7 +588,7 @@ void Display::showEventBanner(const string& eventName, bool isGood) {
     cout << "\n" << color + BOLD;
     cout << "  +" << string(W,'=') << "+\n";
     cout << "  |" << icon << "  " << label
-         << string(W - (int)label.size() - 4, ' ') << "|\n";
+         << string(W - (int)label.size() - 6, ' ') << "|\n";
     cout << "  |" << string(padLeft,' ') << eventName
          << string(padRight,' ') << "|\n";
     cout << "  +" << string(W,'=') << "+\n";
@@ -602,7 +602,7 @@ void Display::showEventBanner(const string& eventName, bool isGood) {
 void Display::showPortBanner(int portKm) {
     cout << "\n" << FG_GOLD + BOLD;
     cout << "  +====================================================+\n";
-    string content = "  WELCOME TO PORT  (" + to_string(portKm) + " km)";
+    string content = "WELCOME TO PORT  (" + to_string(portKm) + " km)";
     int innerWidth = 52;
     int contentLen = (int)content.size();
     int leftPad  = (innerWidth - contentLen) / 2;
@@ -610,7 +610,7 @@ void Display::showPortBanner(int portKm) {
     if (leftPad  < 0) leftPad  = 0;
     if (rightPad < 0) rightPad = 0;
     cout << "  ||" << string(leftPad, ' ') << content
-         << string(rightPad, ' ') << "||\n";
+         << string(rightPad - 2, ' ') << "||\n";
     cout << "  ||  Stock up on supplies and repair your vessel.    ||\n";
     cout << "  +====================================================+\n";
     cout << RST << "\n";
@@ -626,8 +626,8 @@ void Display::showPetDeathNotice(const string& petName) {
     cout << "  ||                                                  ||\n";
     string line1 = petName + " has passed away...";
     string line2 = "You feel a deep and lasting sadness.";
-    cout << "  ||   " << FG_WHITE << padTo(line1, 46) << FG_RED << "  ||\n";
-    cout << "  ||   " << FG_WHITE << padTo(line2, 46) << FG_RED << "  ||\n";
+    cout << "  ||   " << FG_WHITE << padTo(line1, 46) << FG_RED << " ||\n";
+    cout << "  ||   " << FG_WHITE << padTo(line2, 46) << FG_RED << " ||\n";
     cout << "  ||                                                  ||\n";
     cout << "  +====================================================+\n";
     cout << RST << "\n";
@@ -667,11 +667,11 @@ void Display::victoryScreen(int daysUsed, bool bff) {
         cout << "\n" << FG_GOLD + BOLD;
         cout << "  +============================================================+\n";
         cout << "  ||                                                          ||\n";
-        cout << "  ||       Y O K O H A M A   R E A C H E D !                ||\n";
+        cout << "  ||           Y O K O H A M A   R E A C H E D !              ||\n";
         cout << "  ||                                                          ||\n";
-        cout << "  ||           3000 km  --  VOYAGE COMPLETE                  ||\n";
+        cout << "  ||              3000 km  --  VOYAGE COMPLETE                ||\n";
         cout << "  ||           Days at sea: " << FG_WHITE << daysUsed
-             << FG_GOLD << string(flagPad,' ') << "||\n";
+             << FG_GOLD << string(flagPad,' ') << "     ||\n";
         cout << "  ||                                                          ||\n";
         cout << "  +============================================================+\n";
         cout << RST << "\n";
@@ -712,12 +712,12 @@ void Display::defeatScreen(const string& reason) {
         cout << "\n" << FG_RED+BOLD;
         cout << "  +============================================================+\n";
         cout << "  ||                                                          ||\n";
-        cout << "  ||              V O Y A G E   F A I L E D                  ||\n";
+        cout << "  ||              V O Y A G E   F A I L E D                   ||\n";
         cout << "  ||                                                          ||\n";
         string pr = reason;
         while ((int)pr.size() < 54) pr += ' ';
         if ((int)pr.size() > 54) pr = pr.substr(0,54);
-        cout << "  ||   " << pr << "   ||\n";
+        cout << "  ||    " << pr << "||\n";
         cout << "  ||                                                          ||\n";
         cout << "  +============================================================+\n";
         cout << RST << "\n";

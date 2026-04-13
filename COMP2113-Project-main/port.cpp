@@ -74,10 +74,6 @@ void enterPort(Game& game, SanityFatigue& sf) {
     if (waterPrice < 1) waterPrice = 1;
     if (repairCost < 1) repairCost = 1;
 
-    cout << "\n============================================" << endl;
-    cout << "  You've arrived at a port! (" << nextPort << " km)" << endl;
-    cout << "============================================" << endl;
-
     bool atPort = true;
     while (atPort) {
         cout << "\n--------------------------------------------" << endl;
