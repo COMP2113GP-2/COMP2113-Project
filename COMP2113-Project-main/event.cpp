@@ -2,13 +2,19 @@
  * event.cpp
  * Role 3: Random Event System + Difficulty + Loot Tables
  * Course: COMP2113
- * Project: Ocean Voyage
+ * Project: ABYSSAL ODYSSEY
  */
 
 #include "event.h"
+#include "ui_display.h"
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <limits>  // for numeric_limits
+
+static const std::string FG_GOLD = "\033[33m";
+static const std::string BOLD    = "\033[1m";
+static const std::string RST     = "\033[0m";
 
 using namespace std;
 
@@ -46,6 +52,8 @@ static int randRange(int lo, int hi) {
  * badWeight      30     40      50      65
  * portEveryKm   500    500     700    1000
  * ---------------------------------------------------------------
+ * Input: difficulty enum
+ * Output: filled GameDifficultySettings
  */
 GameDifficultySettings getDifficultySettings(Difficulty difficulty) {
     GameDifficultySettings s;
@@ -207,6 +215,9 @@ static const BadEventTemplate BAD_EVENTS[BAD_COUNT] = {
  *
  * Loot pool for exploratory events (6 types):
  *   0=food, 1=water, 2=gold, 3=durability, 4=sanity, 5=distance
+ * 
+ * Input: difficulty
+ * Output: fully filled EventResult
  */
 static EventResult buildGoodEvent(Difficulty difficulty) {
     EventResult r;
@@ -398,6 +409,8 @@ static EventResult buildGoodEvent(Difficulty difficulty) {
 /*
  * Picks a random bad event and fills choice text.
  * Deltas are zeroed — resolvePlayerChoice() sets them after player decides.
+ * Input: none
+ * Output: EventResult with choice text filled, deltas zeroed
  */
 static EventResult buildBadEvent() {
     EventResult r;
@@ -427,6 +440,9 @@ static EventResult buildBadEvent() {
 
 /*
  * Fills resource deltas into result based on player's choice.
+ * Input: EventResult from buildBadEvent()
+ *         choice — 1= choice A (safer), 2 =choice B (riskier)
+ * Output: result deltas filled, description updated with outcome
  */
 static void resolvePlayerChoice(EventResult& result, int choice) {
     // Match event name to template index
@@ -536,10 +552,11 @@ namespace Event {
 
 /*
  * Returns a zero-initialised SanityFatigue for the given difficulty.
- * extraBadEventChance starts at 0 and is updated each turn by updateSanity().
+ * Input: difficulty — chosen by player
+ * Output: initialised SanityFatigue
  */
 SanityFatigue initSanityFatigue(Difficulty difficulty) {
-    (void)difficulty; // currently uniform starting state across difficulties
+    (void)difficulty;
     SanityFatigue sf;
     sf.consecutiveSailingDays = 0;
     sf.extraBadEventChance    = 0;
@@ -575,6 +592,9 @@ void updateFatigue(SanityFatigue& sf, int action) {
  * Recalculates sf.extraBadEventChance from current game state.
  *   +5  if crew sanity is CRITICAL (0-39)
  *   +20 if consecutiveSailingDays >= 5 (fatigue)
+ * Input: sf   — modified in place
+ *        game — reads getSanityStage()
+ * Output: sf.extraBadEventChance updated
  */
 void updateSanity(SanityFatigue& sf, const Game& game) {
     int extra = 0;
@@ -593,6 +613,9 @@ void updateSanity(SanityFatigue& sf, const Game& game) {
 
 /*
  * Rolls against (base difficulty chance + sf.extraBadEventChance).
+ * Input:  game — reads difficulty from game state
+ *        sf   — reads extraBadEventChance
+ * Output: true if an event fires this turn
  */
 bool triggerRandomEvent(const Game& game, const SanityFatigue& sf) {
     GameDifficultySettings s =
@@ -611,12 +634,14 @@ bool triggerRandomEvent(const Game& game, const SanityFatigue& sf) {
 
 /*
  * Full event flow — called by main.cpp after triggerRandomEvent() is true.
+ * Input: game — modified in place
+ *        sf — reads difficulty for loot tables
+ * Output: void
  */
 void runRandomEvent(Game& game, const SanityFatigue& sf) {
     GameDifficultySettings s =
         getDifficultySettings(game.getGameState().difficulty);
 
-    // Step 1: Roll good or bad
     int roll = randRange(1, 100);
     EventResult result;
 
@@ -626,27 +651,36 @@ void runRandomEvent(Game& game, const SanityFatigue& sf) {
         result = buildBadEvent();
     }
 
-    // Step 2: Print event description
-    cout << "\n========================================\n";
-    cout << result.description << "\n";
+    // Show banner
+    Display::showEventBanner(result.eventName, result.isGoodEvent);
 
-    // Step 3: Handle bad event player choice
     if (!result.isGoodEvent) {
+        cout << result.description << "\n";
+        // Get player choice
         int choice = 0;
         while (choice != 1 && choice != 2) {
-            cout << "Enter your choice (1 or 2): ";
-            cin  >> choice;
-            if (choice != 1 && choice != 2) {
+            cout << "\nEnter your choice (1 or 2): ";
+            cin >> choice;
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            if (choice != 1 && choice != 2)
                 cout << "Invalid input. Please enter 1 or 2.\n";
-            }
         }
         resolvePlayerChoice(result, choice);
-        cout << result.description << "\n"; // reprints with outcome appended
+
+        // Extract just the outcome part from description
+        size_t pos = result.description.rfind("\nOutcome: ");
+        cout << "\n" << FG_GOLD + BOLD + "  Outcome: " + RST;
+        if (pos != string::npos)
+            cout << result.description.substr(pos + 10) << "\n";
+        else
+            cout << "(no further effects)\n";
+    } else {
+        // Good event — show gains
+        cout << result.description << "\n";
     }
 
-    cout << "========================================\n";
+    cout << FG_GOLD + "  ========================================\n" + RST;
 
-    // Step 4: Apply standard resource and stat deltas
     game.applyEventEffects(
         result.foodDelta,
         result.waterDelta,

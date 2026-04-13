@@ -139,6 +139,11 @@ struct ActionResult {
     int petMoodDelta;           
     
     std::string actionName;
+    ActionResult()
+        : daysSpent(0), distanceGained(0),
+          foodDelta(0), waterDelta(0), goldDelta(0),
+          staminaDelta(0), sanityDelta(0), durabilityDelta(0),
+          petFoodDelta(0), petMoodDelta(0) {}
 };
 
 // ============================================================================

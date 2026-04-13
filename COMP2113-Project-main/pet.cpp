@@ -13,6 +13,7 @@
 #include <iostream>
 #include <string>
 #include <limits>
+#include "ui_display.h"
 
 using namespace std;
 
@@ -118,11 +119,10 @@ void updatePetDaily(GameState& game) {
     game.pet->petMood = clampPet(game.pet->petMood - 5, 0, 100);
 
     if (game.pet->petFood <= 0 && game.pet->petMood <= 0) {
-        g_pet.alive = false;
-        cout << "\n  [!] " << g_pet.name
-             << " has passed away... You feel a deep sadness." << endl;
-        return;
-    }
+    g_pet.alive = false;
+    Display::showPetDeathNotice(g_pet.name);
+    return;
+}
 
     g_pet.daysAsCompanion++;
     checkBFF(game);

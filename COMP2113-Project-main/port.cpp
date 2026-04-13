@@ -12,6 +12,7 @@
 #include "ui.h"
 #include <iostream>
 #include <limits>
+#include "ui_display.h"
 
 using namespace std;
 
@@ -62,6 +63,8 @@ void enterPort(Game& game, SanityFatigue& sf) {
 
     int nextPort = s_lastPortDistance + ds.portEveryKm;
     s_lastPortDistance = nextPort;
+
+    Display::showPortBanner(nextPort);
 
     int foodPrice  = static_cast<int>(5 * ds.priceMultiplier);
     int waterPrice = static_cast<int>(5 * ds.priceMultiplier);

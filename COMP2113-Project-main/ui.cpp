@@ -9,6 +9,7 @@
  */
 
 #include "ui.h"
+#include "ui_display.h"
 #include "pet.h"
 #include <iostream>
 #include <string>
@@ -51,8 +52,11 @@ static int s_menuChoice = 0;
 // ============================================================================
 // CORE UI FUNCTIONS
 // ============================================================================
+static string g_lastOutcome = "";
 
 namespace UI {
+
+void setLastOutcome(const string& s) { g_lastOutcome = s; }
 
 // ----------------------------------------------------------------------------
 // clearScreen
@@ -350,6 +354,7 @@ void showLoseScreen(const string& reason) {
 // ----------------------------------------------------------------------------
 
 void showWelcomeScreen() {
+    Display::showTitleBanner();
     s_menuChoice = showMainMenu();
     if (s_menuChoice == 3) {
         cout << endl << COLOR_CYAN << "  Fair winds, Captain. Until next time." << COLOR_RESET << endl << endl;
@@ -382,7 +387,8 @@ int chooseDifficulty() {
 // ----------------------------------------------------------------------------
 
 void showGameStatus(const GameState& game, const SanityFatigue& sf) {
-    displayStatus(game, sf);
+    Display::showGameHUD(game, sf, g_lastOutcome);
+    g_lastOutcome = "";
 }
 
 // ----------------------------------------------------------------------------
@@ -414,19 +420,18 @@ int askSaveGame() {
 
 void showGameResult(const GameState& game) {
     if (game.status == GameStatus::VICTORY) {
-        showWinScreen(game.currentDay, g_pet.bffUnlocked);
+        Display::victoryScreen(game.currentDay, g_pet.bffUnlocked);
     } else {
         string reason;
-        if (game.crew.stamina <= 0) {
+        if (game.crew.stamina <= 0)
             reason = "Your crew collapsed from exhaustion.";
-        } else if (game.ship.durability <= 0) {
+        else if (game.ship.durability <= 0)
             reason = "Your ship broke apart beneath the waves.";
-        } else if (game.daysWithoutWaterResupply >= 2) {
+        else if (game.daysWithoutWaterResupply >= 2)
             reason = "The crew perished from dehydration.";
-        } else {
+        else
             reason = "You ran out of time to reach Yokohama.";
-        }
-        showLoseScreen(reason);
+        Display::defeatScreen(reason);
     }
 }
 

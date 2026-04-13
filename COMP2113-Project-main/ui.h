@@ -14,7 +14,7 @@ namespace UI {
     // ========================================================================
     // CORE UI FUNCTIONS (User Spec)
     // ========================================================================
-
+    
     /**
      * Displays title screen with New Game / Load Game / Quit.
      * @return 1=New Game, 2=Load Game, 3=Quit
@@ -113,6 +113,10 @@ namespace UI {
     /** Shows win or lose screen based on game status. */
     void showGameResult(const GameState& game);
 
+    /** Stores last turn outcome to display at top of next HUD. */
+    void setLastOutcome(const std::string& s);
+
 } // namespace UI
 
 #endif // UI_H
+
