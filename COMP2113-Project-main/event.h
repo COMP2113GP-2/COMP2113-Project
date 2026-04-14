@@ -2,7 +2,7 @@
  * event.h
  * Role 3: Random Event System + Difficulty + Loot Tables
  * Course: COMP2113
- * Project: Ocean Voyage
+ * Project: ABYSSAL ODYSSEY
  *
  * Declares:
  *  - GameDifficultySettings : central difficulty table
@@ -96,6 +96,8 @@ struct EventResult {
 
 // ============================================================================
 // EVENT NAMESPACE
+// All functions are free functions inside the Event namespace so main.cpp
+// can call them as Event::triggerRandomEvent(game, g_sf) etc.
 // ============================================================================
 
 namespace Event {
@@ -103,6 +105,8 @@ namespace Event {
     /*
      * Initialises a SanityFatigue struct for the chosen difficulty.
      * Call once at game start (new game or after load).
+     * Input:  difficulty — chosen by player
+     * Output: initialised SanityFatigue struct
      */
     SanityFatigue initSanityFatigue(Difficulty difficulty);
 
@@ -110,6 +114,9 @@ namespace Event {
      * Updates g_sf after the player takes an action this turn.
      * Increments consecutiveSailingDays for Sail, resets for Rest/Explore.
      *         action — 1 = Sail, 2 = Rest, 3 = Explore
+     * Input:  sf     — SanityFatigue to update (modified in place)
+     *         action — 1 = Sail, 2 = Rest, 3 = Explore
+     * Output: sf.consecutiveSailingDays updated
      */
     void updateFatigue(SanityFatigue& sf, int action);
 
