@@ -41,16 +41,17 @@ Link: https://youtu.be/YilnJM0iFvc?feature=shared
 ---
 
 ## 🌊 Game Description
-**Ocean Voyage Survival Challenge** is a text‑based survival game set in the Pacific Ocean.  
-You are the captain sailing **from Hong Kong to Yokohama (3000 km)**.
+🌊 Welcome to Abyssal Odyssey: Ocean Voyage Survival Challenge, a gripping text-based survival game built entirely in C++! We’re thrilled to bring the thrill of high-seas adventure to life in a strategic, immersive way. In this game, you’ll step into the role of captain, leading a 3000km voyage from Hong Kong to Yokohama. Your mission: master resource management, outsmart random ocean events, and guide your crew, ship, and loyal pet companion to safety before the deadline!
 
-You must:
-- Manage resources carefully
-- Choose daily actions (Sail / Explore / Rest)
-- Respond to random good/bad ocean events
-- Trade supplies and repair your ship at ports
-- Reach the destination **before the deadline**
-- Keep your crew, ship, and pet alive
+⚓ At the start of your journey, you’ll set sail with your crew and a trusty pet, ready to face the unpredictable Pacific. Every day, you’ll choose your action: push forward with sailing to make progress, explore for rare supplies and treasures, or rest to restore your crew’s stamina and sanity.
+
+🌪️ As you sail, you’ll encounter dynamic random events—from devastating storms and supply shortages to lucky discoveries and friendly traders. Each choice you make carries real consequences: mismanage your food, water, or ship durability, and your voyage could end in disaster.
+
+🛍️ When you reach coastal ports, you’ll have the chance to trade for vital provisions, repair your damaged ship, and stock up for the long journey ahead. Keep a close eye on your resources, your crew’s morale, and the ticking deadline to stay on course.
+
+🏆 Your ultimate goal is to reach Yokohama safely before time runs out, keeping your crew, ship, and pet alive through every storm and crisis. Only the most strategic, quick-thinking captains will conquer the Pacific and complete their voyage!
+
+🎮 Our game is tense, strategic, and endlessly replayable, with multiple difficulty levels and a deep pet companion system. With its engaging decision-driven gameplay and nostalgic text-adventure feel, we’re sure it will appeal to survival game fans and strategy lovers alike. So hoist the sails, and set off on your ocean odyssey!
 
 ---
 
@@ -86,12 +87,21 @@ This project fully implements **all 6 mandatory coding elements** required by th
 ---
 
 ## 🚀 Additional Features
-- Three daily actions: **Sail, Explore, Rest**
-- **Fatigue System** with consecutive sailing penalties
-- **Sanity System** that affects event probabilities
-- **Pet System** with food, mood, and *Best Friend Forever* achievement
-- **Port Trading**: buy supplies, repair ship, save game
-- Complete **win/lose conditions** with multiple failure endings
+🎮 **Core Daily Gameplay**
+- Three Meaningful Daily Actions: Choose between Sail (progress toward your destination), Explore (scavenge rare supplies and treasures), Rest (restore crew stamina and sanity), or interact with pets — every choice shapes your voyage’s outcome.
+  
+🧠 **Immersive Survival Systems**
+- Dynamic Fatigue System: Consecutive sailing inflicts escalating stamina penalties, forcing strategic rest to avoid crew exhaustion and catastrophic failures.
+- Sanity Mechanic: Crew sanity directly modifies random event probabilities — low sanity drastically increases the risk of deadly storms, mutinies, and other crises, while high sanity unlocks rare beneficial encounters.
+  
+🐾 **Pet Companion System**
+- Full Pet Lifecycle Management: Nurture your loyal companion with food, care, and affection to maintain its mood. Unlock the exclusive Best Friend Forever achievement by keeping your pet healthy and happy for the entire voyage, with unique pet-triggered events and bonuses.
+  
+🏙️ **Port & Progression Features**
+- Comprehensive Port System: Trade for vital supplies, repair ship damage, save your progress, and restock at coastal stops — critical for surviving the 3000km Pacific crossing.
+  
+🎯 **Endgame & Replayability**
+- Robust Win/Lose Conditions: Multiple distinct failure endings (crew starvation, ship sinking, pet death, missed deadline) and a single true victory condition, with balanced difficulty scaling for endless replayability.
 
 ---
 
