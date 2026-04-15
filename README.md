@@ -35,8 +35,8 @@
 ---
 
 ## 🎥 3-Minute Demo Video
-Link: **https://drive.google.com/file/d/XXXXXXX/view**  
-*(Please replace with your actual video link)*
+Link: https://youtu.be/YilnJM0iFvc?feature=shared
+
 
 ---
 
