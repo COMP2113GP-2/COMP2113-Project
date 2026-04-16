@@ -14,6 +14,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <cstdio>
 
 using namespace std;
 
