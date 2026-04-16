@@ -1,9 +1,9 @@
 #include "game.h"
 #include <algorithm> // Required for std::max and std::min in C++11
 
-// ============================================================================
+// ===========================================================================
 // PRIVATE HELPER METHODS
-// ============================================================================
+// ===========================================================================
 
 void Game::applySanityDrain(int daysSpent) {
     int drain = difficultyConfig.sanityDrainPerDay * daysSpent;
