@@ -155,7 +155,7 @@ make clean
 ├── port.h / port.cpp     # Port system & trading
 ├── save.h / save.cpp     # File I/O, save/load functions
 ├── ui.h / ui.cpp         # UI menus, input handling
-├─ ui_display.h / ui_display.cpp  # UI rendering & display logic
+├── ui_display.h / ui_display.cpp  # UI rendering & display logic
 ├── pet.h / pet.cpp       # Pet system & achievement
 ├── Makefile              # Compilation script
 ├── README.md             # Project documentation
