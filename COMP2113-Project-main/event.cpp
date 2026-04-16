@@ -639,10 +639,6 @@ bool triggerRandomEvent(const Game& game, const SanityFatigue& sf) {
  * Output: void
  */
 void runRandomEvent(Game& game, const SanityFatigue& sf) {
-    runRandomEventWithResult(game, sf);
-}
-
-EventResult runRandomEventWithResult(Game& game, const SanityFatigue& sf) {
     GameDifficultySettings s =
         getDifficultySettings(game.getGameState().difficulty);
 
@@ -658,14 +654,9 @@ EventResult runRandomEventWithResult(Game& game, const SanityFatigue& sf) {
     // Show banner
     Display::showEventBanner(result.eventName, result.isGoodEvent);
 
-    // Play storm animation specifically for Sudden Storm event
-    if (result.eventName == "Sudden Storm") {
-        Display::stormAnimation();
-    }
-
     if (!result.isGoodEvent) {
         cout << result.description << "\n";
-
+        // Get player choice
         int choice = 0;
         while (choice != 1 && choice != 2) {
             cout << "\nEnter your choice (1 or 2): ";
@@ -675,14 +666,14 @@ EventResult runRandomEventWithResult(Game& game, const SanityFatigue& sf) {
                 cout << "Invalid input. Please enter 1 or 2.\n";
         }
         resolvePlayerChoice(result, choice);
-        
+
         // Extract just the outcome part from description
         size_t pos = result.description.rfind("\nOutcome: ");
         cout << "\n" << FG_GOLD + BOLD + "  Outcome: " + RST;
         if (pos != string::npos)
             cout << result.description.substr(pos + 10) << "\n";
         else
-            cout << "(no change)\n";
+            cout << "(no further effects)\n";
     } else {
         // Good event — show gains
         cout << result.description << "\n";
@@ -698,8 +689,6 @@ EventResult runRandomEventWithResult(Game& game, const SanityFatigue& sf) {
         result.staminaDelta,
         result.durabilityDelta
     );
-
-    return result;
 }
 
 } // namespace Event

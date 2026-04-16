@@ -56,7 +56,6 @@ bool saveGame(const Game& game, const SanityFatigue& sf) {
     out << s.resources.gold << endl;
     out << s.consecutiveSailingDays << endl;
     out << s.daysWithoutWaterResupply << endl;
-    out << s.daysWithoutFood << endl;
 
     if (s.pet != nullptr) {
         out << s.pet->petFood << endl;
@@ -153,7 +152,6 @@ bool loadGame(Game& game, SanityFatigue& sf) {
     in >> s.resources.gold;
     in >> s.consecutiveSailingDays;
     in >> s.daysWithoutWaterResupply;
-    in >> s.daysWithoutFood;
 
     int petFood, petMood;
     in >> petFood >> petMood;

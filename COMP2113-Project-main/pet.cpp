@@ -14,7 +14,6 @@
 #include <string>
 #include <limits>
 #include "ui_display.h"
-#include <algorithm>
 
 using namespace std;
 
@@ -139,19 +138,11 @@ void feedPet(GameState& game) {
         return;
     }
 
-    if (game.resources.food <= 0) {
-        cout << "\n\033[31m  You have no food to spare for "
-             << g_pet.name << "!\033[0m\n";
-        return;
-    }
+    game.pet->petFood = clampPet(game.pet->petFood + 25, 0, 100);
+    game.pet->petMood = clampPet(game.pet->petMood + 5, 0, 100);
 
-    game.resources.food  = std::max(0, game.resources.food - 1);
-    game.pet->petFood    = clampPet(game.pet->petFood + 25, 0, 100);
-    game.pet->petMood    = clampPet(game.pet->petMood + 5,  0, 100);
-
-    cout << "\n\033[32m  You share some of your food with "
-         << g_pet.name << ".\033[0m\n";
-    cout << "\033[33m  (Human) Food -1   Pet Food +25   Mood +5\033[0m\n";
+    cout << "  You feed " << g_pet.name << " a hearty meal." << endl;
+    cout << "  Food +" << 25 << "  Mood +" << 5 << endl;
 }
 
 // ----------------------------------------------------------------------------

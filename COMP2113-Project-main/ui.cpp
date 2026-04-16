@@ -427,10 +427,8 @@ void showGameResult(const GameState& game) {
             reason = "Your crew collapsed from exhaustion.";
         else if (game.ship.durability <= 0)
             reason = "Your ship broke apart beneath the waves.";
-        else if (game.resources.freshWater <= 0 && game.daysWithoutWaterResupply >= 2)
+        else if (game.daysWithoutWaterResupply >= 2)
             reason = "The crew perished from dehydration.";
-        else if (game.daysWithoutFood >= 3)
-            reason = "The crew starved after 3 days without food.";
         else
             reason = "You ran out of time to reach Yokohama.";
         Display::defeatScreen(reason);

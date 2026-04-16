@@ -154,13 +154,6 @@ namespace Event {
      */
     void runRandomEvent(Game& game, const SanityFatigue& sf);
 
-    /*
-     * extraDaysLost and distance bonuses.
-     * Input:  game, sf
-     * Output: EventResult with all deltas filled
-     */
-    EventResult runRandomEventWithResult(Game& game, const SanityFatigue& sf);
-
 } // namespace Event
 
 #endif // EVENT_H

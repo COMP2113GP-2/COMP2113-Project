@@ -98,8 +98,6 @@ static string buildOutcomeLine(const ActionResult& r) {
 int main() {
     srand(static_cast<unsigned>(time(0)));
 
-    Display::showWidthReminder(); 
-
     while (true) {
 
         // Step 1: Title + main menu
@@ -196,31 +194,8 @@ int main() {
             // Random event check — fires after Sail or Explore
             if (action == 1 || action == 2) {
                 if (Event::triggerRandomEvent(game, g_sf)) {
-                    EventResult evResult = Event::runRandomEventWithResult(game, g_sf);
+                    Event::runRandomEvent(game, g_sf);
 
-                    // Apply extra days lost
-                    if (evResult.extraDaysLost > 0) {
-                        game.getMutableState().currentDay += evResult.extraDaysLost;
-                        game.getMutableState().daysWithoutWaterResupply +=
-                            evResult.extraDaysLost;
-                    }
-
-                    // Apply distance bonus
-                    if (evResult.extraDaysLost < 0) {
-                        game.getMutableState().ship.distance +=
-                            (-evResult.extraDaysLost);
-                        if (game.getMutableState().ship.distance > 3000)
-                            game.getMutableState().ship.distance = 3000;
-                    }
-
-                    // Half distance for Reef choice B
-                    if (evResult.halfDistanceThisTurn && result.distanceGained > 0) {
-                        game.getMutableState().ship.distance -=
-                            (result.distanceGained / 2);
-                        if (game.getMutableState().ship.distance < 0)
-                            game.getMutableState().ship.distance = 0;
-                    }
-                    
                     // Wait for player to read event before HUD clears
                     cout << "\n\033[33m\033[1m  Press Enter to continue...\033[0m" << flush;
                     {
