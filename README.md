@@ -26,9 +26,9 @@
 ## 👥 Team Members
 | Member | UID | Role & Responsibility |
 |--------|-----|------------------------|
-| Li Aitong | 3036588060 | Team Leader / Main Program & Integration |
+| Li Aitong | 3036588060 | Team Leader / Main Program & Integration + Video |
 | Yau Isaac Sung-yip | 3036587884 | Core Game Logic (Resources, Actions, Status) |
-| Shu Siming | 3036484771 | Random Event System + Difficulty + Loot Tables |
+| Shu Siming | 3036484771 | Random Event System + Difficulty + Loot Tables + UI Display |
 | Zhao Ryan En Han | 3036460294 | Port System + Save/Load (File I/O) |
 | Yu Ho Kwan Marcus | 3036636453 | UI, Input & Pet System |
 
@@ -126,6 +126,8 @@ make clean
 ---
 
 ## 🎮 How to Play
+> **Reminder** : The recommended terminal size is 55x125. You can still play at any size, but the UI may not align perfectly.
+
 1. Select your preferred difficulty
 2. Choose whether to bring a pet
 3. Each day: select **Sail / Explore / Rest**
@@ -143,7 +145,8 @@ make clean
 ├── event.h / event.cpp   # Random events, difficulty, loot tables
 ├── port.h / port.cpp     # Port system & trading
 ├── save.h / save.cpp     # File I/O, save/load functions
-├── ui.h / ui.cpp         # UI menus, input handling, display
+├── ui.h / ui.cpp         # UI menus, input handling
+├── ui_display.h / ui_display.cpp  # UI rendering & display logic
 ├── pet.h / pet.cpp       # Pet system & achievement
 ├── Makefile              # Compilation script
 ├── README.md             # Project documentation

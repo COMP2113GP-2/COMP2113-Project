@@ -27,7 +27,7 @@ void Game::checkWinLoseConditions() {
     // 1. Check failure conditions first (Using <= 0 is safer than == 0)
     if (gameState.crew.stamina <= 0 ||
         gameState.ship.durability <= 0 ||
-        gameState.daysWithoutWaterResupply >= 2) {
+        gameState.resources.freshWater <= 0 && gameState.daysWithoutWaterResupply > 0) {
         gameState.status = GameStatus::DEFEAT;
         return;
     }
@@ -128,9 +128,10 @@ ActionResult Game::sail(int daysToBeSailed) {
     gameState.currentDay += daysToBeSailed;
 
     int fatiguePenalty = 0;
-    if (gameState.consecutiveSailingDays >= 5) {
-        // Only penalize the days that exceed the 4-day limit during this specific action
-        int penalizedDays = std::min(daysToBeSailed, gameState.consecutiveSailingDays - 4);
+    // High sanity (>= 90) grants immunity to fatigue penalty
+    if (gameState.consecutiveSailingDays >= 5 && gameState.crew.sanity < 90) {
+        int penalizedDays = std::min(daysToBeSailed,
+                                     gameState.consecutiveSailingDays - 4);
         if (penalizedDays > 0) {
             fatiguePenalty = -2 * penalizedDays;
             gameState.crew.sanity = clamp(gameState.crew.sanity + fatiguePenalty, 0, 100);
@@ -142,11 +143,18 @@ ActionResult Game::sail(int daysToBeSailed) {
     applySanityDrain(daysToBeSailed);
     result.sanityDelta += (difficultyConfig.sanityDrainPerDay * daysToBeSailed);
 
-    // --- WATER RESUPPLY COUNTER FIX ---
+    // --- WATER RESUPPLY COUNTER ---
     if (gameState.resources.freshWater <= 0) {
         gameState.daysWithoutWaterResupply += daysToBeSailed;
     } else {
         gameState.daysWithoutWaterResupply = 0;
+    }
+
+    // --- FOOD STARVATION COUNTER ---
+    if (gameState.resources.food <= 0) {
+        gameState.daysWithoutFood += daysToBeSailed;
+    } else {
+        gameState.daysWithoutFood = 0;
     }
 
     // Handle Pet Mood logic
@@ -192,6 +200,12 @@ ActionResult Game::rest(int daysToRest) {
         gameState.daysWithoutWaterResupply = 0;
     }
 
+    if (gameState.resources.food <= 0) {
+        gameState.daysWithoutFood += daysToRest;
+    } else {
+        gameState.daysWithoutFood = 0;
+    }
+
     if (gameState.pet != nullptr && gameState.pet->petFood == 0) {
         int moodDrop = -5 * daysToRest;
         gameState.pet->petMood = clamp(gameState.pet->petMood + moodDrop, 0, 100);
@@ -230,6 +244,12 @@ ActionResult Game::explore(int daysToExplore) {
         gameState.daysWithoutWaterResupply += daysToExplore;
     } else {
         gameState.daysWithoutWaterResupply = 0;
+    }
+
+    if (gameState.resources.food <= 0) {
+        gameState.daysWithoutFood += daysToExplore;
+    } else {
+        gameState.daysWithoutFood = 0;
     }
 
     if (gameState.pet != nullptr && gameState.pet->petFood == 0) {
@@ -294,6 +314,9 @@ void Game::applyEventEffects(int foodGain, int waterGain, int goldGain,
     if (gameState.resources.freshWater > 0) {
         gameState.daysWithoutWaterResupply = 0;
     }
+    if (gameState.resources.food > 0) {
+        gameState.daysWithoutFood = 0;
+    }
 
     checkWinLoseConditions();
 }
@@ -315,6 +338,9 @@ void Game::applyMarketResupply(int foodPurchased, int waterPurchased,
 
     if (gameState.resources.freshWater > 0) {
         gameState.daysWithoutWaterResupply = 0;
+    }
+    if (gameState.resources.food > 0) {
+        gameState.daysWithoutFood = 0;
     }
 
     checkWinLoseConditions();
