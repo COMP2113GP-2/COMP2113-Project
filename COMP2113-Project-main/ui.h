@@ -9,13 +9,12 @@
 // UI NAMESPACE
 // ============================================================================
 
-namespace UI
-{
+namespace UI {
 
     // ========================================================================
     // CORE UI FUNCTIONS (User Spec)
     // ========================================================================
-
+    
     /**
      * Displays title screen with New Game / Load Game / Quit.
      * @return 1=New Game, 2=Load Game, 3=Quit
@@ -58,7 +57,7 @@ namespace UI
      * @param game Current game state
      * @param sf Current sanity/fatigue state
      */
-    void displayStatus(const GameState &game, const SanityFatigue &sf);
+    void displayStatus(const GameState& game, const SanityFatigue& sf);
 
     /**
      * Victory screen.
@@ -71,7 +70,7 @@ namespace UI
      * Game over screen with defeat reason.
      * @param reason Description of why the player lost
      */
-    void showLoseScreen(const std::string &reason);
+    void showLoseScreen(const std::string& reason);
 
     /**
      * Validated integer input. Loops until player enters value in [min, max].
@@ -103,7 +102,7 @@ namespace UI
     int chooseDifficulty();
 
     /** Wrapper for displayStatus(). */
-    void showGameStatus(const GameState &game, const SanityFatigue &sf);
+    void showGameStatus(const GameState& game, const SanityFatigue& sf);
 
     /** Wrapper for showDailyActionMenu() using global pet state. */
     int playerActionMenu();
@@ -111,15 +110,13 @@ namespace UI
     /** Prompts player to save. @return 1=Save, 2=No */
     int askSaveGame();
 
-    /** Prompts player to delete save file. @return 1=Delete, 2=Cancel */
-    int askDeleteSave();
-
     /** Shows win or lose screen based on game status. */
-    void showGameResult(const GameState &game);
+    void showGameResult(const GameState& game);
 
     /** Stores last turn outcome to display at top of next HUD. */
-    void setLastOutcome(const std::string &s);
+    void setLastOutcome(const std::string& s);
 
 } // namespace UI
 
 #endif // UI_H
+

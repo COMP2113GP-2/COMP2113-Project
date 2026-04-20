@@ -13,71 +13,35 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <sstream>
-#include <cstdio>
 
 using namespace std;
 
-static const char *SAVE_FILE = "save.txt";
-static const string SAVE_HEADER = "ABYSSAL_ODYSSEY_SAVE_V2"; // Versioned for future updates
-static const int SAVE_VERSION = 2;
+static const char* SAVE_FILE = "save.txt";
+static const string SAVE_HEADER = "ABYSSAL_ODYSSEY_SAVE";
 
 // ============================================================================
-// Helper Functions (Internal)
+// SAVE SYSTEM NAMESPACE
 // ============================================================================
 
-namespace
-{
+namespace SaveSystem {
 
-    // Convert Difficulty to/from int safely
-    int difficultyToInt(Difficulty d)
-    {
-        switch (d)
-        {
-        case Difficulty::STORY:
-            return 0;
-        case Difficulty::EASY:
-            return 1;
-        case Difficulty::MEDIUM:
-            return 2;
-        case Difficulty::HARD:
-            return 3;
-        default:
-            return 1; // Default to EASY
-        }
+bool saveGame(const Game& game, const SanityFatigue& sf) {
+    ofstream out(SAVE_FILE);
+    if (!out.is_open()) {
+        cout << "  [!] Failed to open save file for writing." << endl;
+        return false;
     }
 
-    Difficulty intToDifficulty(int val)
-    {
-        switch (val)
-        {
-        case 0:
-            return Difficulty::STORY;
-        case 1:
-            return Difficulty::EASY;
-        case 2:
-            return Difficulty::MEDIUM;
-        case 3:
-            return Difficulty::HARD;
-        default:
-            return Difficulty::EASY;
-        }
-    }
+    const GameState& s = game.getGameState();
 
-    // Convert PetType to/from int safely
-    int petTypeToInt(PetType t)
-    {
-        switch (t)
-        {
-        case PetType::CAT:
-            return 0;
-        case PetType::DOG:
-            return 1;
-        case PetType::PARROT:
-            return 2;
-        default:
-            return 0;
-        }
+    out << SAVE_HEADER << endl;
+
+    int diffInt = 0;
+    switch (s.difficulty) {
+        case Difficulty::STORY:  diffInt = 0; break;
+        case Difficulty::EASY:   diffInt = 1; break;
+        case Difficulty::MEDIUM: diffInt = 2; break;
+        case Difficulty::HARD:   diffInt = 3; break;
     }
     out << diffInt << endl;
     out << (s.pet != nullptr ? 1 : 0) << endl;
@@ -102,136 +66,76 @@ namespace
         out << 0 << endl;
     }
 
-    // Write a line to file with error checking
-    bool writeLine(ofstream &out, const string &line)
-    {
-        if (!(out << line << endl))
-        {
-            cerr << "  [!] Write error: " << line << endl;
-            return false;
-        }
-        return true;
+    out << g_pet.name << endl;
+    int typeInt = 0;
+    switch (g_pet.type) {
+        case PetType::CAT:    typeInt = 0; break;
+        case PetType::DOG:    typeInt = 1; break;
+        case PetType::PARROT: typeInt = 2; break;
     }
+    out << typeInt << endl;
+    out << (g_pet.alive ? 1 : 0) << endl;
+    out << g_pet.daysAsCompanion << endl;
+    out << (g_pet.bffUnlocked ? 1 : 0) << endl;
+    out << (g_pet.hasPet ? 1 : 0) << endl;
 
-    // Read a line and parse value
-    template <typename T>
-    bool readValue(ifstream &in, T &value, const string &fieldName)
-    {
-        if (!(in >> value))
-        {
-            cerr << "  [!] Failed to read field: " << fieldName << endl;
-            return false;
-        }
-        return true;
-    }
+    out << sf.consecutiveSailingDays << endl;
+    out << sf.extraBadEventChance << endl;
 
-} // anonymous namespace
+    out.close();
+    cout << "  Game saved successfully!" << endl;
+    return true;
+}
 
-// ============================================================================
-// SAVE SYSTEM NAMESPACE
-// ============================================================================
+bool hasSaveFile() {
+    ifstream in(SAVE_FILE);
+    if (!in.is_open()) return false;
 
-namespace SaveSystem
-{
+    string header;
+    getline(in, header);
+    in.close();
+    return header == SAVE_HEADER;
+}
 
-    bool saveGame(const Game &game, const SanityFatigue &sf)
-    {
-        ofstream out(SAVE_FILE);
-        if (!out.is_open())
-        {
-            cout << "  [!] Failed to open save file for writing." << endl;
-            return false;
-        }
+bool peekSave(Difficulty& diff, bool& hasPet) {
+    ifstream in(SAVE_FILE);
+    if (!in.is_open()) return false;
 
-        const GameState &s = game.getGameState();
-
-        // Write header with version
-        if (!writeLine(out, SAVE_HEADER))
-            return false;
-        if (!writeLine(out, to_string(SAVE_VERSION)))
-            return false;
-
-        // Write difficulty and pet existence
-        if (!writeLine(out, to_string(difficultyToInt(s.difficulty))))
-            return false;
-        if (!writeLine(out, to_string(s.pet != nullptr ? 1 : 0)))
-            return false;
-
-        // Write core game state (one per line for clarity)
-        if (!writeLine(out, to_string(s.currentDay)))
-            return false;
-        if (!writeLine(out, to_string(s.ship.distance)))
-            return false;
-        if (!writeLine(out, to_string(s.ship.durability)))
-            return false;
-        if (!writeLine(out, to_string(s.crew.stamina)))
-            return false;
-        if (!writeLine(out, to_string(s.crew.sanity)))
-            return false;
-        if (!writeLine(out, to_string(s.resources.food)))
-            return false;
-        if (!writeLine(out, to_string(s.resources.freshWater)))
-            return false;
-        if (!writeLine(out, to_string(s.resources.gold)))
-            return false;
-        if (!writeLine(out, to_string(s.consecutiveSailingDays)))
-            return false;
-        if (!writeLine(out, to_string(s.daysWithoutWaterResupply)))
-            return false;
-
-        // Write pet data (if exists)
-        if (s.pet != nullptr)
-        {
-            if (!writeLine(out, to_string(s.pet->petFood)))
-                return false;
-            if (!writeLine(out, to_string(s.pet->petMood)))
-                return false;
-        }
-        else
-        {
-            if (!writeLine(out, "0"))
-                return false;
-            if (!writeLine(out, "0"))
-                return false;
-        }
-
-        // Write global pet data
-        if (!writeLine(out, g_pet.name))
-            return false;
-        if (!writeLine(out, to_string(petTypeToInt(g_pet.type))))
-            return false;
-        if (!writeLine(out, to_string(g_pet.alive ? 1 : 0)))
-            return false;
-        if (!writeLine(out, to_string(g_pet.daysAsCompanion)))
-            return false;
-        if (!writeLine(out, to_string(g_pet.bffUnlocked ? 1 : 0)))
-            return false;
-        if (!writeLine(out, to_string(g_pet.hasPet ? 1 : 0)))
-            return false;
-
-        // Write SanityFatigue data
-        if (!writeLine(out, to_string(sf.consecutiveSailingDays)))
-            return false;
-        if (!writeLine(out, to_string(sf.extraBadEventChance)))
-            return false;
-
-        out.close();
-        cout << "  [✓] Game saved successfully!" << endl;
-        return true;
-    }
-
-    bool hasSaveFile()
-    {
-        ifstream in(SAVE_FILE);
-        if (!in.is_open())
-            return false;
-
-        string header;
-        getline(in, header);
+    string header;
+    getline(in, header);
+    if (header != SAVE_HEADER) {
         in.close();
+        return false;
+    }
 
-        // Check for either old or new save format
-        return (header == SAVE_HEADER || header == "ABYSSAL_ODYSSEY_SAVE");
+    int diffInt, petInt;
+    in >> diffInt >> petInt;
+    in.close();
+
+    switch (diffInt) {
+        case 0: diff = Difficulty::STORY;  break;
+        case 1: diff = Difficulty::EASY;   break;
+        case 2: diff = Difficulty::MEDIUM; break;
+        case 3: diff = Difficulty::HARD;   break;
+        default: diff = Difficulty::EASY;  break;
+    }
+    hasPet = (petInt != 0);
+    return true;
+}
+
+bool loadGame(Game& game, SanityFatigue& sf) {
+    ifstream in(SAVE_FILE);
+    if (!in.is_open()) {
+        cout << "  [!] No save file found." << endl;
+        return false;
+    }
+
+    string header;
+    getline(in, header);
+    if (header != SAVE_HEADER) {
+        cout << "  [!] Save file is corrupted." << endl;
+        in.close();
+        return false;
     }
 
     int diffInt, petInt;
@@ -258,230 +162,28 @@ namespace SaveSystem
         s.pet->petMood = petMood;
     }
 
-    bool loadGame(Game &game, SanityFatigue &sf)
-    {
-        ifstream in(SAVE_FILE);
-        if (!in.is_open())
-        {
-            cout << "  [!] No save file found." << endl;
-            return false;
-        }
+    in.ignore();
+    getline(in, g_pet.name);
 
-        string header;
-        getline(in, header);
-        if (header != SAVE_HEADER && header != "ABYSSAL_ODYSSEY_SAVE")
-        {
-            cout << "  [!] Save file is corrupted or incompatible." << endl;
-            in.close();
-            return false;
-        }
+    int typeInt, aliveInt, bffInt, hasPetInt;
+    in >> typeInt >> aliveInt >> g_pet.daysAsCompanion >> bffInt >> hasPetInt;
 
-        // Read version if using new format
-        int saveVersion = 1;
-        if (header == SAVE_HEADER)
-        {
-            string versionStr;
-            getline(in, versionStr);
-            saveVersion = stoi(versionStr);
-        }
-
-        int diffInt, petInt;
-        if (!readValue(in, diffInt, "difficulty"))
-        {
-            in.close();
-            return false;
-        }
-        if (!readValue(in, petInt, "pet existence"))
-        {
-            in.close();
-            return false;
-        }
-
-        GameState &s = game.getMutableState();
-
-        // Read core game state
-        if (!readValue(in, s.currentDay, "currentDay"))
-        {
-            in.close();
-            return false;
-        }
-        if (!readValue(in, s.ship.distance, "distance"))
-        {
-            in.close();
-            return false;
-        }
-        if (!readValue(in, s.ship.durability, "durability"))
-        {
-            in.close();
-            return false;
-        }
-        if (!readValue(in, s.crew.stamina, "stamina"))
-        {
-            in.close();
-            return false;
-        }
-        if (!readValue(in, s.crew.sanity, "sanity"))
-        {
-            in.close();
-            return false;
-        }
-        if (!readValue(in, s.resources.food, "food"))
-        {
-            in.close();
-            return false;
-        }
-        if (!readValue(in, s.resources.freshWater, "freshWater"))
-        {
-            in.close();
-            return false;
-        }
-        if (!readValue(in, s.resources.gold, "gold"))
-        {
-            in.close();
-            return false;
-        }
-        if (!readValue(in, s.consecutiveSailingDays, "consecutiveSailingDays"))
-        {
-            in.close();
-            return false;
-        }
-        if (!readValue(in, s.daysWithoutWaterResupply, "daysWithoutWaterResupply"))
-        {
-            in.close();
-            return false;
-        }
-
-        // Read pet data
-        int petFood, petMood;
-        if (!readValue(in, petFood, "petFood"))
-        {
-            in.close();
-            return false;
-        }
-        if (!readValue(in, petMood, "petMood"))
-        {
-            in.close();
-            return false;
-        }
-
-        if (s.pet != nullptr)
-        {
-            s.pet->petFood = petFood;
-            s.pet->petMood = petMood;
-        }
-
-        // Skip newline before reading string
-        in.ignore();
-
-        // Read global pet data
-        getline(in, g_pet.name);
-
-        int typeInt, aliveInt, bffInt, hasPetInt;
-        if (!readValue(in, typeInt, "petType"))
-        {
-            in.close();
-            return false;
-        }
-        if (!readValue(in, aliveInt, "petAlive"))
-        {
-            in.close();
-            return false;
-        }
-        if (!readValue(in, g_pet.daysAsCompanion, "daysAsCompanion"))
-        {
-            in.close();
-            return false;
-        }
-        if (!readValue(in, bffInt, "bffUnlocked"))
-        {
-            in.close();
-            return false;
-        }
-        if (!readValue(in, hasPetInt, "hasPet"))
-        {
-            in.close();
-            return false;
-        }
-
-        g_pet.type = intToPetType(typeInt);
-        g_pet.alive = (aliveInt != 0);
-        g_pet.bffUnlocked = (bffInt != 0);
-        g_pet.hasPet = (hasPetInt != 0);
-
-        // Read SanityFatigue data
-        if (!readValue(in, sf.consecutiveSailingDays, "sf.consecutiveSailingDays"))
-        {
-            in.close();
-            return false;
-        }
-        if (!readValue(in, sf.extraBadEventChance, "sf.extraBadEventChance"))
-        {
-            in.close();
-            return false;
-        }
-
-        in.close();
-        cout << "  [✓] Game loaded successfully! (Save version: " << saveVersion << ")" << endl;
-        return true;
+    switch (typeInt) {
+        case 0: g_pet.type = PetType::CAT;    break;
+        case 1: g_pet.type = PetType::DOG;    break;
+        case 2: g_pet.type = PetType::PARROT; break;
+        default: g_pet.type = PetType::CAT;   break;
     }
+    g_pet.alive = (aliveInt != 0);
+    g_pet.bffUnlocked = (bffInt != 0);
+    g_pet.hasPet = (hasPetInt != 0);
 
-    // NEW: Utility function to delete save file (useful for new game or reset)
-    bool deleteSaveFile()
-    {
-        if (remove(SAVE_FILE) == 0)
-        {
-            cout << "  [✓] Save file deleted." << endl;
-            return true;
-        }
-        else
-        {
-            cout << "  [!] No save file to delete." << endl;
-            return false;
-        }
-    }
+    in >> sf.consecutiveSailingDays;
+    in >> sf.extraBadEventChance;
 
-    // NEW: Get save file info without full load
-    SaveInfo getSaveInfo()
-    {
-        SaveInfo info;
-        info.exists = false;
-        info.hasPet = false;
-        info.difficulty = Difficulty::EASY;
-        info.dayCount = 0;
-
-        ifstream in(SAVE_FILE);
-        if (!in.is_open())
-            return info;
-
-        string header;
-        getline(in, header);
-        if (header != SAVE_HEADER && header != "ABYSSAL_ODYSSEY_SAVE")
-        {
-            in.close();
-            return info;
-        }
-
-        info.exists = true;
-
-        // Skip version if needed
-        if (header == SAVE_HEADER)
-        {
-            string versionLine;
-            getline(in, versionLine);
-        }
-
-        int diffInt, petInt, dayCount;
-        if (readValue(in, diffInt, "difficulty") &&
-            readValue(in, petInt, "hasPet") &&
-            readValue(in, dayCount, "currentDay"))
-        {
-            info.difficulty = intToDifficulty(diffInt);
-            info.hasPet = (petInt != 0);
-            info.dayCount = dayCount;
-        }
-
-        in.close();
-        return info;
-    }
+    in.close();
+    cout << "  Game loaded successfully!" << endl;
+    return true;
+}
 
 } // namespace SaveSystem
