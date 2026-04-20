@@ -79,20 +79,27 @@ namespace
             return 0;
         }
     }
+    out << diffInt << endl;
+    out << (s.pet != nullptr ? 1 : 0) << endl;
 
-    PetType intToPetType(int val)
-    {
-        switch (val)
-        {
-        case 0:
-            return PetType::CAT;
-        case 1:
-            return PetType::DOG;
-        case 2:
-            return PetType::PARROT;
-        default:
-            return PetType::CAT;
-        }
+    out << s.currentDay << endl;
+    out << s.ship.distance << endl;
+    out << s.ship.durability << endl;
+    out << s.crew.stamina << endl;
+    out << s.crew.sanity << endl;
+    out << s.resources.food << endl;
+    out << s.resources.freshWater << endl;
+    out << s.resources.gold << endl;
+    out << s.consecutiveSailingDays << endl;
+    out << s.daysWithoutWaterResupply << endl;
+    out << s.daysWithoutFood << endl;
+
+    if (s.pet != nullptr) {
+        out << s.pet->petFood << endl;
+        out << s.pet->petMood << endl;
+    } else {
+        out << 0 << endl;
+        out << 0 << endl;
     }
 
     // Write a line to file with error checking
@@ -227,46 +234,28 @@ namespace SaveSystem
         return (header == SAVE_HEADER || header == "ABYSSAL_ODYSSEY_SAVE");
     }
 
-    bool peekSave(Difficulty &diff, bool &hasPet)
-    {
-        ifstream in(SAVE_FILE);
-        if (!in.is_open())
-            return false;
+    int diffInt, petInt;
+    in >> diffInt >> petInt;
 
-        string header;
-        getline(in, header);
+    GameState& s = game.getMutableState();
 
-        // Check if valid save file
-        if (header != SAVE_HEADER && header != "ABYSSAL_ODYSSEY_SAVE")
-        {
-            in.close();
-            return false;
-        }
+    in >> s.currentDay;
+    in >> s.ship.distance;
+    in >> s.ship.durability;
+    in >> s.crew.stamina;
+    in >> s.crew.sanity;
+    in >> s.resources.food;
+    in >> s.resources.freshWater;
+    in >> s.resources.gold;
+    in >> s.consecutiveSailingDays;
+    in >> s.daysWithoutWaterResupply;
+    in >> s.daysWithoutFood;
 
-        // Skip version line if using new format
-        if (header == SAVE_HEADER)
-        {
-            string versionLine;
-            getline(in, versionLine);
-        }
-
-        int diffInt, petInt;
-        if (!readValue(in, diffInt, "difficulty"))
-        {
-            in.close();
-            return false;
-        }
-        if (!readValue(in, petInt, "hasPet"))
-        {
-            in.close();
-            return false;
-        }
-
-        in.close();
-
-        diff = intToDifficulty(diffInt);
-        hasPet = (petInt != 0);
-        return true;
+    int petFood, petMood;
+    in >> petFood >> petMood;
+    if (s.pet != nullptr) {
+        s.pet->petFood = petFood;
+        s.pet->petMood = petMood;
     }
 
     bool loadGame(Game &game, SanityFatigue &sf)

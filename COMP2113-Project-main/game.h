@@ -95,15 +95,16 @@ struct GameState {
     int currentDay;              
     int consecutiveSailingDays;  
     int daysWithoutWaterResupply; 
+    int daysWithoutFood;
     
     Difficulty difficulty;
     GameStatus status;
     
-    GameState(Difficulty diff, bool hasPet) 
-        : ship(), crew(), resources(), pet(nullptr), 
-          currentDay(0), consecutiveSailingDays(0), 
-          daysWithoutWaterResupply(0), difficulty(diff), 
-          status(GameStatus::ONGOING) {
+    GameState(Difficulty diff, bool hasPet)
+        : ship(), crew(), resources(), pet(nullptr),
+          currentDay(0), consecutiveSailingDays(0),
+          daysWithoutWaterResupply(0), daysWithoutFood(0),
+          difficulty(diff), status(GameStatus::ONGOING) {
         if (hasPet) {
             pet = new Pet();
         }

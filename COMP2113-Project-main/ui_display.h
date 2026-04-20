@@ -13,6 +13,11 @@
 #include <string>
 
 namespace Display {
+    /*
+    * Prints a one-time terminal width reminder.
+    * Call once before showTitleBanner().
+    */
+    void showWidthReminder();
 
     /*
      * Prints the animated title banner.

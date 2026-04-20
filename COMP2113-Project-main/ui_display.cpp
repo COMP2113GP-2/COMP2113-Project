@@ -3,6 +3,7 @@
  * Role 3: ASCII Ship Display & Animation System
  * Course: COMP2113 / ENGG1340
  * Project: Abyssal Odyssey
+ * ASCII art from/geneated by: https://www.asciiart.eu
  */
 
 #include "ui_display.h"
@@ -79,7 +80,7 @@ static string padTo(const string& s, int width) {
 }
 
 // ============================================================================
-// SHIP FRAME (top-down view with clean border)
+// SHIP FRAME
 // ============================================================================
 
 /*
@@ -172,7 +173,32 @@ static vector<string> buildShipFrame(int wavePhase, bool stormy) {
     return f;
 }
 
-
+/*
+ * Prints a one-time terminal width reminder before the title screen.
+ */
+void Display::showWidthReminder() {
+    cout << "\033[2J\033[H";
+    cout << FG_GOLD + BOLD;
+    cout << "\n\n";
+    cout << "  +----------------------------------------------------------+\n";
+    cout << "  |                     DISPLAY REMINDER                     |\n";
+    cout << "  +----------------------------------------------------------+\n";
+    cout << "  |                                                          |\n";
+    cout << "  |  Recommended terminal size is " << FG_WHITE << "55 x 125" << FG_GOLD << "                   |\n";
+    cout << "  |  (Height: 55 rows, Width: 125 columns)                   |\n";
+    cout << "  |                                                          |\n";
+    cout << "  |  To set terminal size:                                   |\n";
+    cout << "  |  " << FG_CYAN << "Drag the terminal window edge to fit." << FG_GOLD << "                   |\n";
+    cout << "  |                                                          |\n";
+    cout << "  |  You can still play at any size, but the UI              |\n";
+    cout << "  |  may not align perfectly.                                |\n";
+    cout << "  |                                                          |\n";
+    cout << "  +----------------------------------------------------------+\n";
+    cout << RST << "\n";
+    cout << FG_GOLD + "  Press Enter to continue..." + RST << flush;
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) {}
+}
 
 
 
@@ -233,11 +259,11 @@ void Display::showGameHUD(const GameState& game, const SanityFatigue& sf,
 
     // Last turn outcome shown at the very top — always visible
     if (!lastOutcome.empty()) {
-        cout << FG_GOLD + BOLD + " +----------------------------------------------------------------------+\n" + RST;
+        cout << FG_GOLD + BOLD + " +------------------------------------------------------------------------------------------------------+\n" + RST;
         cout << FG_GOLD + BOLD + " | LAST TURN:" + RST + " "
              + padTo(lastOutcome, 58)
              + FG_GOLD + BOLD + " |\n" + RST;
-        cout << FG_GOLD + BOLD + " +----------------------------------------------------------------------+\n" + RST;
+        cout << FG_GOLD + BOLD + " +------------------------------------------------------------------------------------------------------+\n" + RST;
         cout << "\n";
     }
 
@@ -257,7 +283,7 @@ void Display::showGameHUD(const GameState& game, const SanityFatigue& sf,
     else if (game.crew.sanity >= 30) weather = FG_BLUE + string("[ STORMY ]");
     else                             weather = FG_RED  + string("[  DIRE  ]");
 
-    cout << FG_GOLD + BOLD + " +======================================================================+\n" + RST;
+    cout << FG_GOLD + BOLD + " +=============================================================================+\n" + RST;
 
     char dayBuf[16], distBuf[16], limitBuf[16];
     snprintf(dayBuf,   sizeof(dayBuf),   "%4d", game.currentDay);
@@ -277,7 +303,7 @@ void Display::showGameHUD(const GameState& game, const SanityFatigue& sf,
          << FG_GRAY + "  |  " << diffStr
          << FG_GRAY + "  |  " << weather << RST
          << FG_GOLD + BOLD + "  |\n" + RST;
-    cout << FG_GOLD + BOLD + " +======================================================================+\n" + RST;
+    cout << FG_GOLD + BOLD + " +=============================================================================+\n" + RST;
     cout << "\n";
 
     bool stormy = (game.crew.sanity < 30 || game.ship.durability <= 3);
@@ -325,9 +351,12 @@ void Display::showGameHUD(const GameState& game, const SanityFatigue& sf,
     left.push_back(FG_GOLD + BOLD + " SANITY STAGE" + RST);
     left.push_back(FG_GOLD + " -------------" + RST);
 
-    if (game.crew.sanity >= 80) {
-        left.push_back(FG_CYAN  + BOLD + " >> HIGH (80-100)" + RST);
-        left.push_back(FG_CYAN  + "    2 actions next turn!" + RST);
+    if (game.crew.sanity >= 90) {
+        left.push_back(FG_CYAN  + BOLD + " >> PEAK (90-100)" + RST);
+        left.push_back(FG_CYAN  + "    No fatigue penalty!" + RST);
+    } else if (game.crew.sanity >= 80) {
+        left.push_back(FG_CYAN  + BOLD + " >> HIGH (80-89)" + RST);
+        left.push_back(FG_GRAY  + DIM  + "    Standard gameplay." + RST);
     } else if (game.crew.sanity >= 40) {
         left.push_back(FG_GREEN + " >> NORMAL (40-79)" + RST);
         left.push_back(FG_GRAY  + DIM + "    Standard gameplay." + RST);
@@ -336,10 +365,16 @@ void Display::showGameHUD(const GameState& game, const SanityFatigue& sf,
         left.push_back(FG_RED   + "    +5% bad event chance!" + RST);
     }
 
-    if (game.daysWithoutWaterResupply > 0) {
+    if (game.resources.freshWater <= 0 && game.daysWithoutWaterResupply > 0) {
         left.push_back("");
         left.push_back(FG_RED + BOLD + " !! NO WATER: "
                        + to_string(game.daysWithoutWaterResupply) + "/2 days !!" + RST);
+    }
+
+    if (game.resources.food <= 0 && game.daysWithoutFood > 0) {
+        left.push_back("");
+        left.push_back(FG_RED + BOLD + " !! NO FOOD: "
+                       + to_string(game.daysWithoutFood) + "/3 days !!" + RST);
     }
 
     if (game.pet != nullptr) {
@@ -400,7 +435,7 @@ void Display::showGameHUD(const GameState& game, const SanityFatigue& sf,
     if (midPad < 4) midPad = 4;
     string distRow = " | 0 km" + string(midPad - 4, ' ')
                    + FG_LTBLUE + string(distLabel) + RST
-                   + string(midPad - 4, ' ') + "3000 km |";
+                   + string(midPad - 5, ' ') + "3000 km |";
     cout << distRow << "\n";
     cout << FG_GOLD + BOLD + " +" + string(INNER, '-') + "+\n" + RST;
     cout << "\n";
@@ -671,7 +706,7 @@ void Display::victoryScreen(int daysUsed, bool bff) {
         cout << "  ||                                                          ||\n";
         cout << "  ||              3000 km  --  VOYAGE COMPLETE                ||\n";
         cout << "  ||           Days at sea: " << FG_WHITE << daysUsed
-             << FG_GOLD << string(flagPad,' ') << "     ||\n";
+             << FG_GOLD << string(flagPad,' ') << "       ||\n";
         cout << "  ||                                                          ||\n";
         cout << "  +============================================================+\n";
         cout << RST << "\n";
