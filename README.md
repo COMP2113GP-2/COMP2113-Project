@@ -147,6 +147,14 @@ make clean
 5. Visit ports to trade, repair, save progress, and restock supplies(**Food(1) / Water(2) / Repair(3) / Leave(4)**)
 6. Reach **3000 km (Yokohama)** before the deadline to win!
 
+### Win & Failure Conditions
+- **Victory**: Reach 3000 km and arrive at Yokohama Port before the deadline, with Crew Stamina > 0.
+- **Failure (Immediate Game Over)**:
+  - Deadline passed before reaching destination
+  - Crew Stamina = 0
+  - Fresh Water = 0 and no resupply for 2 consecutive days
+  - Ship Durability = 0
+
 ---
 
 ## 📁 Project Structure
