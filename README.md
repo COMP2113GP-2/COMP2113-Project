@@ -137,12 +137,15 @@ make clean
 
 ## 🎮 How to Play
 > **Reminder** : The recommended terminal size is 55x125. You can still play at any size, but the UI may not align perfectly.
-1. Select your preferred difficulty
-2. Choose whether to bring a pet
-3. Each day: select **Sail / Explore / Rest**
-4. Respond to random events
-5. Visit ports to trade, repair, and save
-6. Reach **3000 km** before the deadline to win!
+
+ **Enter the number corresponding to your choice to proceed.**
+
+1. Select your preferred difficulty (**Story（1）/ Easy（2） / Medium（3） / Hard（4）**)
+2. Choose whether to bring a pet (**adds survival mechanics + exclusive events**)
+3. Each day: select **Sail（1） / Explore（2） / Rest（3）/ interact with pet(4)** to manage progress and resources
+4. Respond to random events (**choices impact crew/ship/pet status**)
+5. Visit ports to trade, repair, save progress, and restock supplies(**Food(1) / Water(2) / Repair(3) / Leave(4)**)
+6. Reach **3000 km (Yokohama)** before the deadline to win!
 
 ---
 
